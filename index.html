@@ -456,10 +456,17 @@
       fits: null   // no stacked FITS for this one. To offer a download: { href: 'fits/file.fits', size: '000 MB', note: '...' }
     },
     {
-      title: 'Tracked deep-sky image', designation: 'Catalog ID', category: 'Deep sky',
+      title: 'Tracked deep-sky image', designation: 'Messier 101', category: 'Deep sky',
       src: 'images/tracked-deep-sky.jpg', alt: 'EDIT: your tracked deep-sky image',
       description: 'EDIT: two or three sentences about this image and what you learned making it.',
-      specs: specs(),
+      specs: specs({
+       'Captured': 'June 2026',
+  'Integration': '3 h 24 min',
+  'Camera': 'Sony a6000',
+  'Optics': 'Sony E 55–210mm f/4.5–6.3 OSS',
+  'Sky': 'Bortle 8',
+  'Processing': 'Siril, SetiAstroSuite'   
+      }),
       fits: { href: '#', size: '000 MB', note: 'Calibrated and stacked. Not stretched.' }
     },
     {
