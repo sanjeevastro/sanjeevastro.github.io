@@ -1639,9 +1639,16 @@
   function histogramNumber(n) {
     return n >= 1000000 ? (n / 1000000).toFixed(1) + 'M' : n >= 1000 ? (n / 1000).toFixed(1) + 'k' : String(Math.round(n));
   }
-  var histogramFrame=0,histogramVisual=null;
+  var histogramFrame=0,histogramVisual=null,histogramInView=false;
+  var histogramVisibility='IntersectionObserver' in window?new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      histogramInView=entry.isIntersecting&&entry.intersectionRatio>=.35;
+      if(histogramInView&&histogramData&&!histogramVisual)drawHistogram();
+    });
+  },{root:$('.viewer-scroll'),threshold:[0,.35]}):null;
   function drawHistogram() {
     if (!histogramData) return;
+    if(!histogramVisual&&!histogramInView&&histogramVisibility&&!reduce())return;
     var log = $('#hist-log').checked, keys = ['r', 'g', 'b'], colors = ['#ff818a', '#81d69b', '#81b8ff'];
     var enabled = keys.map(function (key) { return $('[data-channel="' + key + '"]').checked; });
     var max = Math.max(1, histogramData.max), left = 66, top = 24, width = 554, height = 186;
@@ -1729,6 +1736,8 @@
 
   function loadHistogram(img, im) {
     var token = ++histogramToken;
+    histogramInView=false;
+    if(histogramVisibility){histogramVisibility.disconnect();histogramVisibility.observe($('#hist-chart'));}
     cancelAnimationFrame(histogramFrame);histogramFrame=0;histogramVisual=null;
     histogramData = null; histPlot.innerHTML = '';
     histStatus.textContent = 'Reading image pixels…';
@@ -1876,6 +1885,8 @@
     if (!vs.open || vs.closing) return;
     vs.closing = true;
     histogramToken++;
+    if(histogramVisibility)histogramVisibility.disconnect();
+    histogramInView=false;
     cancelAnimationFrame(exposureFrame);exposureFrame=0;
     cancelAnimationFrame(histogramFrame);histogramFrame=0;
     resetPhotoZoom();
