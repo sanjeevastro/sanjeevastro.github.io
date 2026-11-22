@@ -183,6 +183,10 @@
   .card .cap { flex-direction: column; gap: 2px; }
   .card .cap h3 { font-size: 1.35rem; }
 
+  /* Keep fitted home-page photos free of visible letterbox panels. */
+  .feature .media, .card .media { background: transparent; }
+  .feature .media.missing, .card .media.missing { background: var(--surface); }
+
   /* ---------- Sub-pages ---------- */
   .page { padding-top: calc(var(--nav-h) + clamp(56px, 9vw, 120px)); padding-bottom: clamp(72px, 10vw, 140px); }
   .page-title { font-family: var(--serif); font-weight: 300; font-size: clamp(2.8rem, 7vw, 5.6rem); line-height: 1.02; letter-spacing: -0.028em; }
