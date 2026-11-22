@@ -1124,7 +1124,7 @@
     else if (e.key === 'ArrowLeft') stepViewer(-1);
     else if (e.key === 'ArrowRight') stepViewer(1);
     else if (e.key === 'Tab') {
-      var f = $$('button, a[href]', viewer).filter(function (x) { return x.offsetParent !== null; });
+      var f = $$('button, a[href], input', viewer).filter(function (x) { return x.offsetParent !== null; });
       if (!f.length) return;
       var first = f[0], last = f[f.length - 1];
       if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
