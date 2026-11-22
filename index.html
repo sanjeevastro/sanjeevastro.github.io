@@ -242,7 +242,8 @@
   .viewer-body { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: clamp(24px, 4vw, 56px); align-items: center; }
   .viewer-slot { position: relative; width: 100%; min-width: 0; height: max(180px, calc(100vh - 150px)); height: max(180px, calc(100svh - 150px)); }
   .viewer-media img { object-fit: contain; }
-  .viewer-media { position: absolute; inset: 0; border-radius: 18px; transition: opacity 300ms var(--ease); }
+  .viewer-media { position: absolute; inset: 0; background: transparent; border-radius: 18px; transition: opacity 300ms var(--ease); }
+  .viewer-media.missing { background: var(--surface); }
   .viewer-info { transition: opacity 600ms var(--ease) 220ms, transform 600ms var(--ease-out) 220ms; }
   .viewer-info h2 { font-size: clamp(1.6rem, 2.6vw, 2.1rem); text-wrap: pretty; hyphens: none; }
   .v-desc { margin-top: 16px; color: var(--text-2); }
@@ -467,7 +468,7 @@
       specs: specs({
        'Captured': 'June 2026',
   'Integration': '3 h 24 min',
-  'Camera': 'Sony a6000',
+  'Camera': 'Sony α6000',
   'Optics': 'Sony E 55–210mm f/4.5–6.3 OSS',
   'Sky': 'Bortle 8',
   'Processing': 'Siril, SetiAstroSuite'   
@@ -480,7 +481,7 @@
       description: 'EDIT: two or three sentences about this image.',
       specs: specs({ 'Captured': 'July 2026',
   'Integration': '1 h 39 min',
-  'Camera': 'Sony a6000',
+  'Camera': 'Sony α6000',
   'Optics': 'Sony E 55–210mm f/4.5–6.3 OSS',
   'Sky': 'Bortle 8',
   'Processing': 'Siril, Lightroom'
@@ -493,7 +494,7 @@
       description: 'EDIT: two or three sentences about this image.',
       specs: specs({'Captured': 'June 2026',
   'Integration': '2 h 00 min',
-  'Camera': 'Sony a6000',
+  'Camera': 'Sony α6000',
   'Optics': 'Sony E 55–210mm f/4.5–6.3 OSS',
   'Sky': 'Bortle 8',
   'Processing': 'Siril, Lightroom' }),
