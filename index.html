@@ -1108,7 +1108,8 @@
       skyMap=A.aladin('#sky-map',{survey:'https://irsa.ipac.caltech.edu/data/hips/CDS/DSS2/color',target:'0 +25',fov:300,projection:'AIT',cooFrame:'equatorial',
         showReticle:false,showLayersControl:false,showGotoControl:false,showShareControl:false,showFrame:false,
         showCooLocation:false,showCooGrid:false,showProjectionControl:false,showZoomControl:false,showFullscreenControl:true,
-        showStatusBar:false,showSettingsControl:false,showSimbadPointerControl:false,backgroundColor:'rgb(9,11,14)'});
+        showStatusBar:false,showSettingsControl:false,showSimbadPointerControl:false,lockNorthUp:true,inertia:false,backgroundColor:'rgb(9,11,14)'});
+      skyMap.setFoVRange(0.1,300);
       skyCatalog=A.catalog({name:'My photographs',color:'#63b5ab',sourceSize:14,shape:'circle',displayLabel:true,labelColumn:'name',labelColor:'#e9e6df',labelFont:'12px sans-serif',onClick:function(source){if(source&&source.data)selectSkyPhoto(source.data.index,false);}});
       skyMap.addCatalog(skyCatalog);
       skyCatalog.addSources(IMAGES.map(function(im,i){var t=skyTarget(im);return t?A.source(t.ra,t.dec,{name:im.title,index:i}):null;}).filter(Boolean));
@@ -1122,7 +1123,7 @@
   }
   $('#sky-reset').addEventListener('click',function(){if(skyMap){skyMap.gotoRaDec(0,25);skyMap.setFoV(skyMap.starMode?360:300);}});
   $('#sky-closer').addEventListener('click',function(){if(skyMap)skyMap.setFoV(Math.max(0.1,skyMap.getFov()[0]/1.7));});
-  $('#sky-farther').addEventListener('click',function(){if(skyMap)skyMap.setFoV(Math.min(360,skyMap.getFov()[0]*1.7));});
+  $('#sky-farther').addEventListener('click',function(){if(skyMap)skyMap.setFoV(Math.min(skyMap.starMode?360:300,skyMap.getFov()[0]*1.7));});
   $('#sky-grid').addEventListener('change',function(){if(skyMap)skyMap.setCooGrid(skyMap.starMode?this.checked:{enabled:this.checked});});
   $('#sky-lines').addEventListener('change',function(){if(skyLines){if(this.checked)skyLines.show();else skyLines.hide();}});
 
