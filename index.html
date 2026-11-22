@@ -331,7 +331,7 @@
   .viewer-media.zoomed { cursor: grab; }
   .viewer-media.dragging { cursor: grabbing; }
   .viewer-media img { -webkit-user-drag: none; }
-  .zoom-toolbar { position: absolute; z-index: 2; bottom: 14px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 4px; padding: 5px; border: 1px solid rgba(255,255,255,0.14); border-radius: 980px; background: rgba(26,27,29,0.78); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+  .zoom-toolbar { position: relative; z-index: 2; width: max-content; margin: 14px auto 0; display: flex; align-items: center; gap: 4px; padding: 5px; border: 1px solid rgba(255,255,255,0.14); border-radius: 980px; background: rgba(26,27,29,0.78); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
   .zoom-toolbar button { border: 0; background: transparent; cursor: pointer; min-width: 38px; height: 36px; padding: 0 10px; border-radius: 980px; font-size: 1.1rem; }
   .zoom-toolbar button:hover { background: rgba(255,255,255,0.1); }
   .zoom-toolbar button:disabled { opacity: 0.3; cursor: default; }
@@ -347,7 +347,7 @@
   /* Explore */
   .explore-layout { display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 24px; margin-top: 32px; align-items: start; }
   .sky-frame { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: 24px; background: #090b0e; }
-  #sky-map { width: 100%; height: min(65vh, 680px); min-height: 420px; }
+  #sky-map { touch-action: none; width: 100%; height: min(65vh, 680px); min-height: 420px; }
   .sky-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 20px; margin-bottom: 16px; font-size: 0.85rem; }
   .sky-controls button, .sky-targets button { border: 1px solid var(--line); border-radius: 980px; background: var(--surface); padding: 8px 16px; cursor: pointer; }
   .sky-controls button:hover, .sky-targets button:hover { border-color: var(--accent); }
@@ -386,10 +386,11 @@
   .viewer-visual { display: contents; }
   .viewer-slot { grid-column: 1; grid-row: 1; }
   .viewer-info { grid-column: 2; grid-row: 1; align-self: center; }
-  .zoom-hint { grid-column: 1; grid-row: 2; }
-  .histogram { grid-column: 1; grid-row: 3; }
+  .zoom-toolbar { grid-column: 1; grid-row: 2; }
+  .zoom-hint { grid-column: 1; grid-row: 3; }
+  .histogram { grid-column: 1; grid-row: 4; }
   @media (max-width: 900px) {
-    .viewer-info { grid-column: 1; grid-row: 4; align-self: start; margin-top: 32px; }
+    .viewer-info { grid-column: 1; grid-row: 5; align-self: start; margin-top: 32px; }
   }
 
 
@@ -625,12 +626,12 @@
         <div class="viewer-visual">
           <div class="viewer-slot" id="v-slot">
             <div class="viewer-media" id="v-media"></div>
+            </div>
             <div class="zoom-toolbar" role="group" aria-label="Photo zoom">
               <button id="zoom-out" type="button" aria-label="Zoom out" disabled>−</button>
               <button id="zoom-fit" class="zoom-fit" type="button" aria-label="Reset zoom to fit photograph" title="Reset to fit">1×</button>
               <button id="zoom-in" type="button" aria-label="Zoom in">+</button>
             </div>
-          </div>
           <p class="zoom-hint">Double-click or pinch to zoom · Drag to explore · Tap the zoom value to reset</p>
           <section class="histogram" aria-labelledby="hist-title">
             <h3 id="hist-title">Colors &amp; brightness</h3>
@@ -1118,6 +1119,38 @@
     }).catch(function(){ $('#sky-lines').checked=false;$('#sky-lines').disabled=true; });
   }
 
+  // Handle two-finger zoom on both the survey and lightweight star map.
+  // Capture touch events before renderer handlers so Safari zooms the map, not the page.
+  var skyPinch=null, skyHadPinch=false;
+  function skyTouchDistance(touches) {
+    return Math.max(1,Math.hypot(touches[1].clientX-touches[0].clientX,touches[1].clientY-touches[0].clientY));
+  }
+  var skyTouchRoot=$('#sky-map');
+  skyTouchRoot.addEventListener('touchstart',function(e){
+    if(!skyMap)return;
+    if(e.touches.length>=2){
+      skyHadPinch=true;
+      skyPinch={distance:skyTouchDistance(e.touches),fov:skyMap.getFov()[0]};
+      e.preventDefault();e.stopImmediatePropagation();
+    }
+  },{capture:true,passive:false});
+  skyTouchRoot.addEventListener('touchmove',function(e){
+    if(!skyPinch||!skyMap)return;
+    e.preventDefault();e.stopImmediatePropagation();
+    if(e.touches.length>=2){
+      skyMap.setFoV(clamp(skyPinch.fov*skyPinch.distance/skyTouchDistance(e.touches),skyMap.starMode?5:0.1,skyMap.starMode?360:300));
+    }
+  },{capture:true,passive:false});
+  skyTouchRoot.addEventListener('pointermove',function(e){if(skyPinch)e.stopImmediatePropagation();},{capture:true});
+  function endSkyTouch(e){
+    if(!skyHadPinch)return;
+    e.preventDefault();e.stopImmediatePropagation();
+    if(!e.touches.length){skyPinch=null;skyHadPinch=false;}
+    else if(e.touches.length>=2)skyPinch={distance:skyTouchDistance(e.touches),fov:skyMap.getFov()[0]};
+  }
+  skyTouchRoot.addEventListener('touchend',endSkyTouch,{capture:true,passive:false});
+  skyTouchRoot.addEventListener('touchcancel',function(e){endSkyTouch(e);skyPinch=null;skyHadPinch=false;},{capture:true,passive:false});
+
   function initStarMap() {
     $('#sky-status').textContent='Drawing the star map…';
     fetch('sky-data.json').then(function(r){if(!r.ok)throw new Error('Star data unavailable');return r.json();}).then(function(data){
@@ -1161,12 +1194,12 @@
       $('#sky-lines').disabled=false;if(!$('#sky-lines').checked)skyLines.hide();skyMap.setCooGrid($('#sky-grid').checked);
       svg.addEventListener('wheel',function(e){e.preventDefault();skyMap.setFoV(skyMap.getFov()[0]*Math.exp(clamp(e.deltaY,-100,100)*0.003));},{passive:false});
       svg.addEventListener('pointerdown',function(e){if(e.button!==0)return;drag={id:e.pointerId,x:e.clientX,y:e.clientY,bx:box.x,by:box.y,pin:e.target.closest('[data-sky-photo]')};wasDragged=false;svg.setPointerCapture(e.pointerId);});
-      svg.addEventListener('pointermove',function(e){if(!drag||e.pointerId!==drag.id)return;var r=svg.getBoundingClientRect(),dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.hypot(dx,dy)>5)wasDragged=true;box.x=drag.bx-dx/r.width*box.w;box.y=drag.by-dy/r.height*box.h;draw();});
-      svg.addEventListener('pointerup',function(e){if(drag&&e.pointerId===drag.id){if(drag.pin&&!wasDragged)selectSkyPhoto(+drag.pin.dataset.skyPhoto,false);drag=null;}});
+      svg.addEventListener('pointermove',function(e){if(skyPinch||!drag||e.pointerId!==drag.id)return;var r=svg.getBoundingClientRect(),dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.hypot(dx,dy)>5)wasDragged=true;box.x=drag.bx-dx/r.width*box.w;box.y=drag.by-dy/r.height*box.h;draw();});
+      svg.addEventListener('pointerup',function(e){if(drag&&e.pointerId===drag.id){if(drag.pin&&!wasDragged&&!skyHadPinch)selectSkyPhoto(+drag.pin.dataset.skyPhoto,false);drag=null;}});
       svg.addEventListener('pointercancel',function(){drag=null;});
       svg.addEventListener('keydown',function(e){var pin=e.target.closest('[data-sky-photo]');if(pin&&(e.key==='Enter'||e.key===' ')){e.preventDefault();selectSkyPhoto(+pin.dataset.skyPhoto,false);}});
       draw();skyLoading=false;
-      $('#sky-status').textContent='Star map · 5,044 catalogued stars · Drag to explore, scroll to zoom, or choose a photograph';
+      $('#sky-status').textContent='Star map · 5,044 catalogued stars · Drag to explore, scroll or pinch to zoom, or choose a photograph';
     }).catch(function(){skyLoading=false;$('#sky-status').textContent='The star map could not load. The photograph list and previews remain available.';});
   }
 
