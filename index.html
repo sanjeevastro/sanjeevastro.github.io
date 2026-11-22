@@ -282,6 +282,24 @@
     *, *::before, *::after { animation: none !important; transition: none !important; }
     .js .reveal { opacity: 1; transform: none; }
   }
+
+  /* Software links dialog */
+  html.software-open { overflow: hidden; }
+  .software-trigger { padding: 0; border: 0; background: none; cursor: pointer; text-align: left; }
+  .software-dialog { width: min(640px, calc(100% - 32px)); max-height: calc(100vh - 40px); max-height: calc(100svh - 40px); padding: clamp(24px, 5vw, 40px); border: 1px solid var(--line); border-radius: 24px; background: var(--bg); color: var(--text); overflow-y: auto; }
+  .software-dialog::backdrop { background: rgba(0,0,0,0.72); backdrop-filter: blur(12px); }
+  .software-heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+  .software-dialog h2 { font-size: clamp(1.8rem, 5vw, 2.4rem); }
+  .software-dialog > p { margin-top: 12px; color: var(--text-2); }
+  .software-group { margin-top: 28px; }
+  .software-group h3 { font-size: 0.8rem; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .software-group ul { list-style: none; padding: 0; }
+  .software-group li { border-top: 1px solid var(--line); }
+  .software-group a { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 12px 0; text-decoration: none; }
+  .software-group a:hover { color: var(--accent); }
+  .software-group a small { display: block; color: var(--muted); font-size: 0.82rem; }
+  .software-group a > span:last-child { color: var(--muted); }
+
 </style>
 </head>
 
@@ -406,6 +424,15 @@
     </nav>
   </div>
 </footer>
+
+<dialog class="software-dialog" id="software-dialog" aria-labelledby="software-title" aria-describedby="software-description">
+  <div class="software-heading"><h2 id="software-title">Software I use</h2><button class="icon-btn" type="button" id="software-close" aria-label="Close software links" autofocus><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <p id="software-description">Tools I use across capture, stacking, and editing. Links open the official websites in a new tab.</p>
+  <section class="software-group"><h3>Capture &amp; tracking</h3><ul><li><a href="https://nighttime-imaging.eu/" target="_blank" rel="noopener noreferrer"><span>N.I.N.A.<small>Image capture and sequencing</small></span><span aria-hidden="true">↗</span></a></li><li><a href="https://www.skywatcher.com/download/software/synscan-app/" target="_blank" rel="noopener noreferrer"><span>SynScan Pro<small>Mount control and Go-To</small></span><span aria-hidden="true">↗</span></a></li></ul></section>
+  <section class="software-group"><h3>Stacking &amp; processing</h3><ul><li><a href="https://siril.org/" target="_blank" rel="noopener noreferrer"><span>Siril<small>Calibration, stacking, and processing</small></span><span aria-hidden="true">↗</span></a></li><li><a href="https://graxpert.com/" target="_blank" rel="noopener noreferrer"><span>GraXpert<small>Background gradient removal</small></span><span aria-hidden="true">↗</span></a></li><li><a href="https://www.setiastro.com/" target="_blank" rel="noopener noreferrer"><span>Seti Astro Suite<small>Astrophotography processing tools</small></span><span aria-hidden="true">↗</span></a></li></ul></section>
+  <section class="software-group"><h3>Editing &amp; finishing</h3><ul><li><a href="https://www.gimp.org/" target="_blank" rel="noopener noreferrer"><span>GIMP<small>Layers, masks, and final adjustments</small></span><span aria-hidden="true">↗</span></a></li><li><a href="https://www.adobe.com/products/photoshop-lightroom.html" target="_blank" rel="noopener noreferrer"><span>Lightroom<small>Color and tonal adjustments</small></span><span aria-hidden="true">↗</span></a></li><li><a href="https://www.adobe.com/products/photoshop.html" target="_blank" rel="noopener noreferrer"><span>Photoshop<small>Layer-based editing and compositing</small></span><span aria-hidden="true">↗</span></a></li></ul></section>
+  <section class="software-group"><h3>RC-Astro tools</h3><ul><li><a href="https://www.rc-astro.com/software/nxt/" target="_blank" rel="noopener noreferrer"><span>NoiseXTerminator<small>Noise reduction</small></span><span aria-hidden="true">↗</span></a></li><li><a href="https://www.rc-astro.com/software/sxt/" target="_blank" rel="noopener noreferrer"><span>StarXTerminator<small>Separating stars for processing</small></span><span aria-hidden="true">↗</span></a></li></ul></section>
+</dialog>
 
 <!-- ================= IMAGE VIEWER ================= -->
 <div class="viewer" id="viewer" role="dialog" aria-modal="true" aria-labelledby="v-title" hidden>
@@ -597,7 +624,7 @@
     { category: 'Camera', name: 'Sony α6000', note: 'APS-C mirrorless camera used for deep-sky and wide-field astrophotography.', linkLabel: 'Manufacturer page', href: '#' },
     { category: 'Lens', name: 'Sony E 55-210mm f/4.5-6.3 OSS', note: 'Telephoto lens used for tracked images of galaxies, nebulae, and other deep-sky targets.', linkLabel: 'Manufacturer page', href: '#' },
     { category: 'Mount', name: 'Sky-Watcher Star Adventurer GTi', note: 'Motorized equatorial tracking mount with Go-To capabilities used to follow the sky and enable long exposures without star trailing.', linkLabel: 'Manufacturer page', href: '#' },
-    { category: 'Software', name: 'N.I.N.A, SynScan Pro, Siril, Lightroom', note: 'Used for capturing, stacking, processing, plate solving, and final editing.', linkLabel: 'Project page', href: '#' }
+    { category: 'Software', name: 'Capture, stacking & editing', note: 'The tools I use from image capture through final processing.', linkLabel: 'View software', href: '#' }
   ];
 
   var TITLES = {
@@ -655,8 +682,28 @@
   }).join('');
 
   $('#gear').innerHTML = GEAR.map(function (g) {
-    return '<div class="reveal"><dt>' + esc(g.category) + '</dt><dd>' + esc(g.name) + '<small>' + esc(g.note) + '</small></dd><a class="text-link" href="' + esc(g.href) + '" rel="noopener">' + esc(g.linkLabel) + '</a></div>';
+    var action = g.category === 'Software'
+      ? '<button class="text-link software-trigger" type="button" id="software-open" aria-haspopup="dialog" aria-controls="software-dialog">View software</button>'
+      : '<a class="text-link" href="' + esc(g.href) + '" rel="noopener">' + esc(g.linkLabel) + '</a>';
+    return '<div class="reveal"><dt>' + esc(g.category) + '</dt><dd>' + esc(g.name) + '<small>' + esc(g.note) + '</small></dd>' + action + '</div>';
   }).join('');
+
+
+  var softwareDialog = $('#software-dialog'), softwareOpen = $('#software-open');
+  softwareOpen.addEventListener('click', function () {
+    softwareDialog.showModal();
+    document.documentElement.classList.add('software-open');
+  });
+  $('#software-close').addEventListener('click', function () { softwareDialog.close(); });
+  softwareDialog.addEventListener('click', function (e) {
+    if (e.target !== softwareDialog) return;
+    var r = softwareDialog.getBoundingClientRect();
+    if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) softwareDialog.close();
+  });
+  softwareDialog.addEventListener('close', function () {
+    document.documentElement.classList.remove('software-open');
+    softwareOpen.focus({ preventScroll: true });
+  });
 
   function positionThumb() {
     var active = seg.querySelector('[aria-pressed="true"]');
