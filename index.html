@@ -305,6 +305,8 @@
   .software-group a > span:last-child { color: var(--muted); }
 
 
+  .viewer-media .channel-preview { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+
   /* RGB histogram for the displayed photograph */
   .viewer-visual { min-width: 0; }
   .histogram { margin-top: 24px; padding: 20px; border: 1px solid var(--line); border-radius: 18px; background: rgba(26,27,29,0.7); }
@@ -472,7 +474,7 @@
           <div class="viewer-slot" id="v-slot"><div class="viewer-media" id="v-media"></div></div>
           <section class="histogram" aria-labelledby="hist-title">
             <h3 id="hist-title">Colors &amp; brightness</h3>
-            <p>Each curve counts pixels from dark to bright in the finished photograph. This is a brightness histogram, not a wavelength spectrum.</p>
+            <p>Toggle channels to explore their contribution to the photo and histogram. Each curve counts pixels from dark to bright in the finished photograph.</p>
             <div class="hist-controls">
               <fieldset class="hist-channels"><legend>Color channels</legend>
                 <label><input type="checkbox" data-channel="r" checked>Red</label>
@@ -982,6 +984,34 @@
     $('#hist-svg-desc').textContent = (names.length ? names.join(', ') + ' pixel counts by brightness from 0 to 255.' : 'All color channels are hidden.') + (log ? ' The vertical axis uses a logarithmic scale.' : ' The vertical axis uses a linear scale.');
     histStatus.textContent = names.length ? histogramData.width.toLocaleString() + ' × ' + histogramData.height.toLocaleString() + ' pixels · Finished image' : 'Select a color channel to show its curve.';
   }
+  function updateChannelPreview() {
+    var img = $('img', vMedia);
+    if (!img || !img.complete || !img.naturalWidth) return;
+    var enabled = ['r', 'g', 'b'].map(function (key) { return $('[data-channel="' + key + '"]').checked; });
+    var canvas = $('.channel-preview', vMedia);
+    if (enabled.every(function (on) { return on; })) {
+      if (canvas) canvas.hidden = true;
+      img.style.visibility = '';
+      return;
+    }
+    if (!canvas) {
+      canvas = document.createElement('canvas'); canvas.className = 'channel-preview';
+      canvas.setAttribute('role', 'img'); vMedia.appendChild(canvas);
+    }
+    canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
+    var ctx = canvas.getContext('2d');
+    if (!ctx) { canvas.hidden = true; img.style.visibility = ''; return; }
+    ctx.drawImage(img, 0, 0);
+    // Multiply by 0 or 255 per channel to suppress colors without altering the source.
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.fillStyle = 'rgb(' + enabled.map(function (on) { return on ? 255 : 0; }).join(',') + ')';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.globalCompositeOperation = 'source-over';
+    var names = ['red', 'green', 'blue'].filter(function (name, i) { return enabled[i]; });
+    canvas.setAttribute('aria-label', img.alt + ' — ' + (names.length ? names.join(' and ') + ' channels only' : 'all color channels hidden'));
+    canvas.hidden = false; img.style.visibility = 'hidden';
+  }
+
   function loadHistogram(img, im) {
     var token = ++histogramToken;
     histogramData = null; histPlot.innerHTML = '';
@@ -995,6 +1025,7 @@
     };
     var ready = function () {
       if (token !== histogramToken) return;
+      updateChannelPreview();
       if (histogramCache.has(im.src)) { histogramData = histogramCache.get(im.src); drawHistogram(); return; }
       var canvas = document.createElement('canvas');
       canvas.width = img.naturalWidth; canvas.height = Math.min(256, img.naturalHeight);
@@ -1020,7 +1051,12 @@
     if (img.complete) { if (img.naturalWidth) ready(); else fail(); }
     else { img.addEventListener('load', ready, { once: true }); img.addEventListener('error', fail, { once: true }); }
   }
-  $$('.hist-controls input').forEach(function (input) { input.addEventListener('change', drawHistogram); });
+  $$('.hist-controls input').forEach(function (input) {
+    input.addEventListener('change', function () {
+      drawHistogram();
+      if (input.hasAttribute('data-channel')) updateChannelPreview();
+    });
+  });
 
   function fillViewer(i) {
     var im = IMAGES[i];
