@@ -443,28 +443,20 @@
      Put each file in the images/ folder. Keep `category` to a few short names,
      they become the Gallery filters.
      ========================================================== */
-  var SPECS = {
-    'Captured': 'Month Year',
-    'Integration': '0 h 00 min',
-    'Camera': 'Camera model',
-    'Optics': 'Telescope or lens',
-    'Sky': 'Bortle class, moon phase',
-    'Processing': 'One line on how you processed it'
-  };
-  function specs(over) { return Object.assign({}, SPECS, over || {}); }
+  function specs(over) { return Object.assign({}, over || {}); }
 
   var IMAGES = [
     {
-      title: 'Milky Way over Italy', designation: 'Wide field, phone camera', category: 'Milky Way',
+      title: 'Milky Way over Italy', designation: 'Montalcino, Tuscany', category: 'Milky Way',
       src: 'images/milky-way-italy.jpg', alt: 'The Milky Way rising above a distant, illuminated horizon in Italy',
-      description: 'Captured on my phone while visiting Italy, this image shows the Milky Way rising above the distant lights along the horizon. Its dense star fields and dark dust lanes stretch across the sky.',
-      specs: specs({ 'Integration': '00 s', 'Camera': 'Phone model', 'Optics': 'Phone main lens' }),
-      fits: null   // no stacked FITS for this one. To offer a download: { href: 'fits/file.fits', size: '000 MB', note: '...' }
+      description: 'Captured in Montalcino, Tuscany, under Bortle 4 skies, this view shows the Milky Way rising above distant lights along the horizon. I combined 30 thirty-second exposures from my iPhone 17 Pro Max for a total of 15 minutes.',
+      specs: specs({ 'Integration': '15 min', 'Exposures': '30 × 30 s', 'Camera': 'iPhone 17 Pro Max', 'Sky': 'Bortle 4', 'Location': 'Montalcino, Tuscany, Italy' }),
+      fits: null
     },
     {
       title: 'Pinwheel Galaxy', designation: 'Messier 101', category: 'Deep sky',
-      src: 'images/tracked-deep-sky.JPG', alt: 'EDIT: your tracked deep-sky image',
-      description: 'EDIT: two or three sentences about this image and what you learned making it.',
+      src: 'images/tracked-deep-sky.JPG', alt: 'The Pinwheel Galaxy with faint spiral structure in a field of stars',
+      description: 'The Pinwheel Galaxy sits among foreground stars, with faint spiral structure surrounding its brighter center. Captured with my Sony α6000 and 55–210mm zoom lens, this image combines 3 hours and 24 minutes of exposure under Bortle 8 skies.',
       specs: specs({
        'Captured': 'June 2026',
   'Integration': '3 h 24 min',
@@ -473,12 +465,12 @@
   'Sky': 'Bortle 8',
   'Processing': 'Siril, SetiAstroSuite'   
       }),
-      fits: { href: '#', size: '000 MB', note: 'Calibrated and stacked. Not stretched.' }
+      fits: null
     },
     {
       title: 'Andromeda Galaxy', designation: 'Messier 31', category: 'Deep sky',
-      src: 'images/image-03.jpg', alt: 'EDIT: describe this image',
-      description: 'EDIT: two or three sentences about this image.',
+      src: 'images/image-03.jpg', alt: 'The Andromeda Galaxy with a bright center and extended disk',
+      description: 'Andromeda stretches across the frame, with a bright central region fading into its broad outer disk. This image combines 1 hour and 39 minutes of exposure with my Sony α6000 and 55–210mm zoom lens under Bortle 8 skies.',
       specs: specs({ 'Captured': 'July 2026',
   'Integration': '1 h 39 min',
   'Camera': 'Sony α6000',
@@ -486,19 +478,19 @@
   'Sky': 'Bortle 8',
   'Processing': 'Siril, Lightroom'
       }),
-      fits: { href: '#', size: '000 MB', note: 'Calibrated and stacked. Not stretched.' }
+      fits: null
     },
     {
       title: 'Orion Nebula', designation: 'Messier 42', category: 'Deep sky',
-      src: 'images/image-04.jpg', alt: 'EDIT: describe this image',
-      description: 'EDIT: two or three sentences about this image.',
+      src: 'images/image-04.jpg', alt: 'The Orion Nebula with a bright central region and surrounding pink and blue clouds',
+      description: 'Bright central nebulosity gives way to fainter clouds in this view of the Orion Nebula. I captured two hours of exposure with my Sony α6000 and 55–210mm zoom lens under Bortle 8 skies.',
       specs: specs({'Captured': 'June 2026',
   'Integration': '2 h 00 min',
   'Camera': 'Sony α6000',
   'Optics': 'Sony E 55–210mm f/4.5–6.3 OSS',
   'Sky': 'Bortle 8',
   'Processing': 'Siril, Lightroom' }),
-      fits: { href: '#', size: '000 MB', note: 'Calibrated and stacked. Not stretched.' }
+      fits: null
     },
     {
       "title": "Pleiades",
