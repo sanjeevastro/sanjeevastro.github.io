@@ -470,7 +470,7 @@
           </div>
           <div class="sky-frame"><div id="sky-map" aria-label="Interactive sky map of my photographs"></div></div>
           <p class="sky-status" id="sky-status" role="status">The sky map loads when you open Explore.</p>
-          <p class="sky-credit">Sky imagery: <a href="https://aladin.cds.unistra.fr/" target="_blank" rel="noopener">Aladin Lite / CDS</a>, DSS2 (STScI). Constellation lines: <a href="https://github.com/ofrohn/d3-celestial" target="_blank" rel="noopener">D3-Celestial</a>. Markers locate targets, not the exact edges of my photographs.</p>
+          <p class="sky-credit">Sky imagery: <a href="https://aladin.cds.unistra.fr/" target="_blank" rel="noopener">Aladin Lite / CDS</a>, DSS2 (STScI/NASA, CDS), hosted by <a href="https://irsa.ipac.caltech.edu/" target="_blank" rel="noopener">NASA/IPAC IRSA</a>. Constellation lines: <a href="https://github.com/ofrohn/d3-celestial" target="_blank" rel="noopener">D3-Celestial</a>. Markers locate targets, not the exact edges of my photographs.</p>
           <div class="sky-targets" id="sky-targets" aria-label="Choose a photograph"></div>
         </div>
         <aside class="sky-preview" id="sky-preview" aria-label="Selected photograph"></aside>
@@ -1046,7 +1046,7 @@
     if(skyMap||skyLoading)return;
     skyLoading=true;$('#sky-status').textContent='Loading the sky…';
     loadSkyLibrary().then(function(){
-      skyMap=A.aladin('#sky-map',{survey:'P/DSS2/color',target:'0 +25',fov:300,projection:'AIT',cooFrame:'equatorial',
+      skyMap=A.aladin('#sky-map',{survey:'https://irsa.ipac.caltech.edu/data/hips/CDS/DSS2/color',target:'0 +25',fov:300,projection:'AIT',cooFrame:'equatorial',
         showReticle:false,showLayersControl:false,showGotoControl:false,showShareControl:false,showFrame:false,
         showCooLocation:false,showCooGrid:false,showProjectionControl:false,showZoomControl:false,showFullscreenControl:true,
         showStatusBar:false,showSettingsControl:false,showSimbadPointerControl:false,backgroundColor:'rgb(9,11,14)'});
