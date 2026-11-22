@@ -380,6 +380,18 @@
     .sky-preview img { height: 180px; }
   }
 
+
+  /* Align image details with the photo, independently of the graph below it. */
+  .viewer-body { row-gap: 0; align-content: start; }
+  .viewer-visual { display: contents; }
+  .viewer-slot { grid-column: 1; grid-row: 1; }
+  .viewer-info { grid-column: 2; grid-row: 1; align-self: center; }
+  .zoom-hint { grid-column: 1; grid-row: 2; }
+  .histogram { grid-column: 1; grid-row: 3; }
+  @media (max-width: 900px) {
+    .viewer-info { grid-column: 1; grid-row: 4; align-self: start; margin-top: 32px; }
+  }
+
 </style>
 </head>
 
