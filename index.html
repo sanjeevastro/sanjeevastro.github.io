@@ -339,6 +339,11 @@
   .zoom-hint { margin-top: 10px; color: var(--muted); text-align: center; font-size: 0.78rem; }
 
 
+  .star-map-svg { display:block; width:100%; height:100%; touch-action:none; cursor:grab; }
+  .star-map-svg:active { cursor:grabbing; }
+  .star-map-svg [data-sky-photo] { cursor:pointer; }
+  .star-map-svg [data-sky-photo]:focus { outline:none; }
+  .star-map-svg [data-sky-photo]:focus circle { stroke:#fff; stroke-width:3; }
   /* Explore */
   .explore-layout { display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 24px; margin-top: 32px; align-items: start; }
   .sky-frame { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: 24px; background: #090b0e; }
@@ -470,7 +475,7 @@
           </div>
           <div class="sky-frame"><div id="sky-map" aria-label="Interactive sky map of my photographs"></div></div>
           <p class="sky-status" id="sky-status" role="status">The sky map loads when you open Explore.</p>
-          <p class="sky-credit">Sky imagery: <a href="https://aladin.cds.unistra.fr/" target="_blank" rel="noopener">Aladin Lite / CDS</a>, DSS2 (STScI/NASA, CDS), hosted by <a href="https://irsa.ipac.caltech.edu/" target="_blank" rel="noopener">NASA/IPAC IRSA</a>. Constellation lines: <a href="https://github.com/ofrohn/d3-celestial" target="_blank" rel="noopener">D3-Celestial</a>. Markers locate targets, not the exact edges of my photographs.</p>
+          <p class="sky-credit">Sky imagery: <a href="https://aladin.cds.unistra.fr/" target="_blank" rel="noopener">Aladin Lite / CDS</a>, DSS2 (STScI/NASA, CDS), hosted by <a href="https://irsa.ipac.caltech.edu/" target="_blank" rel="noopener">NASA/IPAC IRSA</a>. Constellation lines: <a href="https://github.com/ofrohn/d3-celestial" target="_blank" rel="noopener">D3-Celestial</a>. Markers locate targets, not the exact edges of my photographs. Star-map data: D3-Celestial (<a href="sky-data-license.txt">license</a>).</p>
           <div class="sky-targets" id="sky-targets" aria-label="Choose a photograph"></div>
         </div>
         <aside class="sky-preview" id="sky-preview" aria-label="Selected photograph"></aside>
@@ -1011,7 +1016,7 @@
     $('#sky-preview').innerHTML = '<img src="' + esc(im.src) + '" alt="' + esc(im.alt) + '"><div><h2>' + esc(im.title) + '</h2><p class="desig">' + esc(im.designation) + '</p><p class="sky-note">' +
       (target ? esc(target.region) + (target.approximate ? ' · Approximate region marker' : ' · Target location') : 'A lunar composite. The Moon moves across the sky, so this photograph has no fixed map marker.') +
       '</p><button class="btn" type="button" data-open="' + i + '">View photograph</button></div>';
-    if (move && skyMap && target) { skyMap.gotoRaDec(target.ra,target.dec); skyMap.setFoV(target.fov); }
+    if (move && skyMap && target) { skyMap.setFoV(target.fov); skyMap.gotoRaDec(target.ra,target.dec); }
   }
   $('#sky-targets').innerHTML = IMAGES.map(function(im,i){ return '<button type="button" data-sky-index="'+i+'" aria-pressed="false">'+esc(im.title)+'</button>'; }).join('');
   $('#sky-targets').addEventListener('click',function(e){var b=e.target.closest('[data-sky-index]');if(b)selectSkyPhoto(+b.dataset.skyIndex,true);});
@@ -1032,19 +1037,73 @@
     if (skyMap.addOverlay) skyMap.addOverlay(overlay); else skyMap.addCatalog(overlay);
   }
   function loadConstellationLines() {
-    fetch('https://raw.githubusercontent.com/ofrohn/d3-celestial/master/data/constellations.lines.json').then(function(r){if(!r.ok)throw new Error('Constellation data unavailable');return r.json();}).then(function(data){
+    fetch('sky-data.json').then(function(r){if(!r.ok)throw new Error('Constellation data unavailable');return r.json();}).then(function(data){
       var overlay=A.graphicOverlay({name:'Constellations',color:'rgba(180,190,210,0.45)',lineWidth:1});
       addSkyOverlay(overlay);
-      data.features.forEach(function(f){
+      data.constellations.forEach(function(f){
         var lines=f.geometry.type==='MultiLineString'?f.geometry.coordinates:[f.geometry.coordinates];
         lines.forEach(function(line){overlay.addFootprints([A.polyline(line.map(function(p){return [(p[0]+360)%360,p[1]];}))]);});
       });
       skyLines=overlay;if(!$('#sky-lines').checked)skyLines.hide();
     }).catch(function(){ $('#sky-lines').checked=false;$('#sky-lines').disabled=true; });
   }
+
+  function initStarMap() {
+    $('#sky-status').textContent='Drawing the star map…';
+    fetch('sky-data.json').then(function(r){if(!r.ok)throw new Error('Star data unavailable');return r.json();}).then(function(data){
+      var box={x:0,y:0,w:1000,h:600}, root=$('#sky-map'), drag=null, wasDragged=false;
+      var xy=function(ra,dec){return [1000*(1-((ra%360+360)%360)/360),(90-dec)/180*600];};
+      var stars=data.stars.map(function(p){
+        var v=xy(p[0],p[1]),size=Math.max(0.3,1.9-p[2]*0.25);
+        return '<circle cx="'+v[0].toFixed(2)+'" cy="'+v[1].toFixed(2)+'" r="'+size.toFixed(2)+'" fill="#dce7f5" opacity="'+Math.max(0.25,1-p[2]*0.1).toFixed(2)+'"/>';
+      }).join('');
+      var paths=[];
+      data.constellations.forEach(function(f){
+        f.geometry.coordinates.forEach(function(line){
+          var last=null,d='';
+          line.forEach(function(p){var v=xy(p[0],p[1]);d+=(last&&Math.abs(v[0]-last[0])<500?'L':'M')+v[0].toFixed(2)+','+v[1].toFixed(2);last=v;});
+          paths.push('<path d="'+d+'"/>');
+        });
+      });
+      var grid='';
+      for(var ra=0;ra<360;ra+=30){var x=xy(ra,0)[0];grid+='<path d="M'+x+',0V600"/>';}
+      for(var dec=-60;dec<=60;dec+=30){var y=xy(0,dec)[1];grid+='<path d="M0,'+y+'H1000"/>';}
+      var markers=IMAGES.map(function(im,i){var t=skyTarget(im);if(!t)return '';var p=xy(t.ra,t.dec);return '<g data-sky-photo="'+i+'" tabindex="0" role="button" aria-label="'+esc(im.title)+'" transform="translate('+p[0]+','+p[1]+')"><circle r="6" fill="#63b5ab" stroke="#0b1114" stroke-width="1.5"/><text x="10" y="-8" fill="#e9e6df" stroke="#090b0e" stroke-width="2" paint-order="stroke" font-size="11">'+esc(im.title)+'</text></g>';}).join('');
+      root.innerHTML='<svg class="star-map-svg" viewBox="0 0 1000 600" role="img" aria-label="Interactive celestial star map with photo locations"><title>My photographs in the night sky</title><rect width="1000" height="600" fill="#090b0e"/><g id="star-grid" fill="none" stroke="#28343d" stroke-width="0.5">'+grid+'</g><g>'+stars+'</g><g id="star-lines" fill="none" stroke="#7b8fa5" stroke-opacity="0.5" stroke-width="0.65">'+paths.join('')+'</g><g id="star-pins">'+markers+'</g></svg>';
+      var svg=$('svg',root), lineGroup=$('#star-lines'),gridGroup=$('#star-grid');
+      function draw(){
+        box.x=clamp(box.x,0,1000-box.w);box.y=clamp(box.y,0,600-box.h);
+        svg.setAttribute('viewBox',[box.x,box.y,box.w,box.h].join(' '));
+        var factor=box.w/1000;
+        $$('[data-sky-photo]',root).forEach(function(g){
+          $('circle',g).setAttribute('r',6*factor);$('circle',g).setAttribute('stroke-width',1.5*factor);
+          var text=$('text',g);text.setAttribute('font-size',11*factor);text.setAttribute('x',10*factor);text.setAttribute('y',-8*factor);text.setAttribute('stroke-width',2*factor);
+        });
+      }
+      skyMap={
+        starMode:true,
+        gotoRaDec:function(ra,dec){var p=xy(ra,dec);box.x=p[0]-box.w/2;box.y=p[1]-box.h/2;draw();},
+        setFoV:function(fov){var cx=box.x+box.w/2,cy=box.y+box.h/2;box.w=1000*clamp(fov,5,360)/360;box.h=box.w*0.6;box.x=cx-box.w/2;box.y=cy-box.h/2;draw();},
+        getFov:function(){return [box.w/1000*360,box.h/600*180];},
+        setCooGrid:function(on){gridGroup.style.display=on?'':'none';}
+      };
+      skyLines={show:function(){lineGroup.style.display='';},hide:function(){lineGroup.style.display='none';}};
+      $('#sky-lines').disabled=false;if(!$('#sky-lines').checked)skyLines.hide();skyMap.setCooGrid($('#sky-grid').checked);
+      svg.addEventListener('wheel',function(e){e.preventDefault();skyMap.setFoV(skyMap.getFov()[0]*Math.exp(clamp(e.deltaY,-100,100)*0.003));},{passive:false});
+      svg.addEventListener('pointerdown',function(e){if(e.button!==0)return;drag={id:e.pointerId,x:e.clientX,y:e.clientY,bx:box.x,by:box.y,pin:e.target.closest('[data-sky-photo]')};wasDragged=false;svg.setPointerCapture(e.pointerId);});
+      svg.addEventListener('pointermove',function(e){if(!drag||e.pointerId!==drag.id)return;var r=svg.getBoundingClientRect(),dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.hypot(dx,dy)>5)wasDragged=true;box.x=drag.bx-dx/r.width*box.w;box.y=drag.by-dy/r.height*box.h;draw();});
+      svg.addEventListener('pointerup',function(e){if(drag&&e.pointerId===drag.id){if(drag.pin&&!wasDragged)selectSkyPhoto(+drag.pin.dataset.skyPhoto,false);drag=null;}});
+      svg.addEventListener('pointercancel',function(){drag=null;});
+      svg.addEventListener('keydown',function(e){var pin=e.target.closest('[data-sky-photo]');if(pin&&(e.key==='Enter'||e.key===' ')){e.preventDefault();selectSkyPhoto(+pin.dataset.skyPhoto,false);}});
+      draw();skyLoading=false;
+      $('#sky-status').textContent='Star map · 5,044 catalogued stars · Drag to explore, scroll to zoom, or choose a photograph';
+    }).catch(function(){skyLoading=false;$('#sky-status').textContent='The star map could not load. The photograph list and previews remain available.';});
+  }
+
   function initSkyMap() {
     if(skyMap||skyLoading)return;
     skyLoading=true;$('#sky-status').textContent='Loading the sky…';
+    if(!document.createElement('canvas').getContext('webgl2')){initStarMap();return;}
     loadSkyLibrary().then(function(){
       skyMap=A.aladin('#sky-map',{survey:'https://irsa.ipac.caltech.edu/data/hips/CDS/DSS2/color',target:'0 +25',fov:300,projection:'AIT',cooFrame:'equatorial',
         showReticle:false,showLayersControl:false,showGotoControl:false,showShareControl:false,showFrame:false,
@@ -1057,13 +1116,11 @@
       $('#sky-status').textContent='Drag to explore · Scroll or pinch to zoom · Select a teal marker or a photograph below';
       if($('#sky-grid').checked)skyMap.setCooGrid(true);
     }).catch(function(error){
-      console.error('Explore map initialization failed:',error);
-      skyLoading=false;skyLibraryPromise=null;
-      $('#sky-status').innerHTML='The sky map could not load on this device or connection. You can still explore every photograph below. <button class="text-link software-trigger" id="sky-retry" type="button">Try again</button>';
-      $('#sky-retry').addEventListener('click',initSkyMap);
+      console.warn('Survey renderer unavailable; using star map.',error);
+      skyMap=null;skyLibraryPromise=null;initStarMap();
     });
   }
-  $('#sky-reset').addEventListener('click',function(){if(skyMap){skyMap.gotoRaDec(0,25);skyMap.setFoV(300);}});
+  $('#sky-reset').addEventListener('click',function(){if(skyMap){skyMap.gotoRaDec(0,25);skyMap.setFoV(skyMap.starMode?360:300);}});
   $('#sky-closer').addEventListener('click',function(){if(skyMap)skyMap.setFoV(Math.max(0.1,skyMap.getFov()[0]/1.7));});
   $('#sky-farther').addEventListener('click',function(){if(skyMap)skyMap.setFoV(Math.min(360,skyMap.getFov()[0]*1.7));});
   $('#sky-grid').addEventListener('change',function(){if(skyMap)skyMap.setCooGrid(this.checked);});
