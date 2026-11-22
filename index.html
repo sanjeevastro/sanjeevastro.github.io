@@ -1056,7 +1056,8 @@
       loadConstellationLines();skyLoading=false;
       $('#sky-status').textContent='Drag to explore · Scroll or pinch to zoom · Select a teal marker or a photograph below';
       if($('#sky-grid').checked)skyMap.setCooGrid(true);
-    }).catch(function(){
+    }).catch(function(error){
+      console.error('Explore map initialization failed:',error);
       skyLoading=false;skyLibraryPromise=null;
       $('#sky-status').innerHTML='The sky map could not load on this device or connection. You can still explore every photograph below. <button class="text-link software-trigger" id="sky-retry" type="button">Try again</button>';
       $('#sky-retry').addEventListener('click',initSkyMap);
