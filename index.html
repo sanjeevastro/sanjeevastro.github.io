@@ -153,8 +153,9 @@
   /* ---------- Features ---------- */
   .features { display: grid; gap: clamp(64px, 9vw, 120px); padding-bottom: clamp(72px, 10vw, 140px); }
   .feature { display: block; text-decoration: none; }
-  .feature .media { aspect-ratio: 16 / 9; will-change: transform; }
-  .feature:hover .media img { transform: scale(1.035); }
+  .feature .media { will-change: transform; }
+  .feature .media img { height: auto; max-height: 80vh; max-height: 80svh; object-fit: contain; }
+  .feature:hover .media img { transform: none; }
   .cap { margin-top: 20px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 32px; }
   .cap h3 { font-family: var(--serif); font-weight: 400; font-size: clamp(1.5rem, 2.4vw, 1.95rem); line-height: 1.2; letter-spacing: -0.01em; }
   .desig { color: var(--muted); font-size: 0.9rem; margin-top: 2px; }
@@ -176,8 +177,9 @@
   .rail::-webkit-scrollbar { display: none; }
   .rail::after { content: ""; flex: 0 0 1px; }
   .card { flex: 0 0 clamp(250px, 30vw, 380px); scroll-snap-align: start; display: block; text-decoration: none; }
-  .card .media { aspect-ratio: 4 / 5; }
-  .card:hover .media img { transform: scale(1.04); }
+  .card .media { aspect-ratio: 1; }
+  .card .media img { object-fit: contain; }
+  .card:hover .media img { transform: none; }
   .card .cap { flex-direction: column; gap: 2px; }
   .card .cap h3 { font-size: 1.35rem; }
 
@@ -192,11 +194,15 @@
   .seg button:hover { color: var(--text); }
   .seg button[aria-pressed="true"] { color: var(--bg); }
   .seg-thumb { position: absolute; top: 4px; bottom: 4px; left: 0; width: 0; background: var(--text); border-radius: 980px; transition: transform 550ms var(--ease-out), width 550ms var(--ease-out); }
-  .grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(36px, 4vw, 56px) 24px; }
+  .grid { list-style: none; padding: 0; columns: 3; column-gap: 24px; }
+  .grid > li { break-inside: avoid; margin-bottom: clamp(36px, 4vw, 56px); }
+  .grid > li:not([hidden]) { display: inline-block; width: 100%; vertical-align: top; }
   .gtile { display: block; text-decoration: none; transition: opacity 320ms var(--ease), transform 320ms var(--ease); }
   .gtile.out { opacity: 0; transform: scale(0.96); }
-  .gtile .media { aspect-ratio: 4 / 3; border-radius: 18px; }
-  .gtile:hover .media img { transform: scale(1.04); }
+  .gtile .media { border-radius: 18px; min-height: 48px; }
+  .gtile .media img { height: auto; object-fit: contain; }
+  .gtile .media.missing { aspect-ratio: 4 / 3; }
+  .gtile:hover .media img { transform: none; }
   .gtile .cap h3 { font-size: 1.3rem; }
 
   /* Equipment */
@@ -234,7 +240,8 @@
   .viewer-count { color: var(--muted); font-size: 0.85rem; }
   .viewer-controls { display: flex; gap: 10px; }
   .viewer-body { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: clamp(24px, 4vw, 56px); align-items: center; }
-  .viewer-slot { position: relative; width: 100%; aspect-ratio: 3 / 2; max-height: calc(100vh - 150px); }
+  .viewer-slot { position: relative; width: 100%; min-width: 0; height: max(180px, calc(100vh - 150px)); height: max(180px, calc(100svh - 150px)); }
+  .viewer-media img { object-fit: contain; }
   .viewer-media { position: absolute; inset: 0; border-radius: 18px; transition: opacity 300ms var(--ease); }
   .viewer-info { transition: opacity 600ms var(--ease) 220ms, transform 600ms var(--ease-out) 220ms; }
   .viewer-info h2 { font-size: clamp(1.6rem, 2.6vw, 2.1rem); text-wrap: pretty; hyphens: none; }
@@ -255,18 +262,17 @@
   @media (max-width: 900px) {
     .hero-inner { grid-template-columns: minmax(0, 1fr); }
     .hero-caption { min-width: 0; max-width: 320px; }
-    .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid { columns: 2; }
     .about-grid { grid-template-columns: minmax(0, 1fr); }
     .gear > div { grid-template-columns: minmax(0, 1fr); gap: 4px; }
     .viewer-body { grid-template-columns: minmax(0, 1fr); align-items: start; }
-    .viewer-slot { aspect-ratio: 4 / 3; max-height: 60vh; }
+    .viewer-slot { height: 60vh; height: 60svh; min-height: 180px; }
   }
   @media (max-width: 640px) {
     .nav-inner { grid-template-columns: auto 1fr; column-gap: 18px; }
     .site-nav { justify-self: end; gap: 14px; font-size: 0.78rem; }
     .wordmark { font-size: 1.05rem; }
-    .grid { grid-template-columns: minmax(0, 1fr); }
-    .feature .media { aspect-ratio: 4 / 3; }
+    .grid { columns: 1; }
     .media { border-radius: 18px; }
   }
 
