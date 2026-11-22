@@ -1020,7 +1020,7 @@
     if (img.complete) { if (img.naturalWidth) ready(); else fail(); }
     else { img.addEventListener('load', ready, { once: true }); img.addEventListener('error', fail, { once: true }); }
   }
-  $('.hist-controls input').forEach(function (input) { input.addEventListener('change', drawHistogram); });
+  $$('.hist-controls input').forEach(function (input) { input.addEventListener('change', drawHistogram); });
 
   function fillViewer(i) {
     var im = IMAGES[i];
