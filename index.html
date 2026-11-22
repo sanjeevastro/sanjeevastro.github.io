@@ -1652,7 +1652,7 @@
     var targetHeights=histogramData.counts.map(function(bins){return bins.map(function(n){return scaled(n)/scaled(max);});});
     var targetAlpha=enabled.map(function(on){return on?1:0;});
     var initial=!histogramVisual;
-    var from=histogramVisual||{heights:targetHeights,alpha:[1,1,1]};
+    var from=histogramVisual||{heights:targetHeights,alpha:targetAlpha.slice()};
     cancelAnimationFrame(histogramFrame);
     colors.forEach(function(color,channel){
       out+='<g data-hist-curve="'+channel+'"><path fill="'+color+'" fill-opacity=".08"/><polyline fill="none" stroke="'+color+'" stroke-width="1.6" stroke-linejoin="round"/></g>';
