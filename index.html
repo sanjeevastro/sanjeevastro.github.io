@@ -211,7 +211,7 @@
   .gear > div { display: grid; grid-template-columns: 12rem minmax(0, 1fr) auto; gap: 8px 32px; align-items: baseline; padding: 22px 0; border-top: 1px solid var(--line); }
   .gear dt { color: var(--muted); }
   .gear dd small { display: block; color: var(--muted); font-size: 0.88rem; margin-top: 2px; }
-  .gear a { font-size: 0.9rem; }
+  .gear > div > .text-link { font-size: 0.9rem; font-weight: 400; line-height: inherit; }
 
   /* About */
   .about-grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); gap: clamp(40px, 7vw, 112px); align-items: start; margin-top: clamp(40px, 6vw, 72px); }
@@ -620,10 +620,10 @@
   ];
 
   var GEAR = [
-    { category: 'Telescope', name: 'William Optics RedCat 51', note: 'My current telescope for deep-sky astrophotography, paired with the Sony α6000 and Star Adventurer GTi tracking mount.', linkLabel: 'Manufacturer website', href: 'https://williamoptics.com/' },
-    { category: 'Camera', name: 'Sony α6000', note: 'APS-C mirrorless camera used for deep-sky and wide-field astrophotography.', linkLabel: 'Manufacturer page', href: '#' },
-    { category: 'Lens', name: 'Sony E 55-210mm f/4.5-6.3 OSS', note: 'Telephoto lens used for tracked images of galaxies, nebulae, and other deep-sky targets.', linkLabel: 'Manufacturer page', href: '#' },
-    { category: 'Mount', name: 'Sky-Watcher Star Adventurer GTi', note: 'Motorized equatorial tracking mount with Go-To capabilities used to follow the sky and enable long exposures without star trailing.', linkLabel: 'Manufacturer page', href: '#' },
+    { category: 'Telescope', name: 'William Optics RedCat 51', note: 'My current telescope for deep-sky astrophotography, paired with the Sony α6000 and Star Adventurer GTi tracking mount.', linkLabel: 'Manufacturer page', href: 'https://williamoptics.com/products/cat-51' },
+    { category: 'Camera', name: 'Sony α6000', note: 'APS-C mirrorless camera used for deep-sky and wide-field astrophotography.', linkLabel: 'Manufacturer page', href: 'https://www.sony.ca/en/imaging/interchangeable-lens-cameras/aps-c/p/ilce6000l-b' },
+    { category: 'Lens', name: 'Sony E 55-210mm f/4.5-6.3 OSS', note: 'Telephoto lens used for tracked images of galaxies, nebulae, and other deep-sky targets.', linkLabel: 'Manufacturer page', href: 'https://electronics.sony.com/imaging/lenses/all-e-mount/p/sel55210-b' },
+    { category: 'Mount', name: 'Sky-Watcher Star Adventurer GTi', note: 'Motorized equatorial tracking mount with Go-To capabilities used to follow the sky and enable long exposures without star trailing.', linkLabel: 'Manufacturer page', href: 'https://www.skywatcherusa.com/products/star-adventurer-gti-mount-head-kit' },
     { category: 'Software', name: 'Capture, stacking & editing', note: 'The tools I use from image capture through final processing.', linkLabel: 'View software', href: '#' }
   ];
 
