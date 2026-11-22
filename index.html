@@ -762,6 +762,7 @@
       specs: specs({
        'Captured': 'June 2026',
   'Integration': '3 h 24 min',
+  'Exposures': '408 × 30 s',
   'Camera': 'Sony α6000',
   'Optics': 'Sony E 55–210mm f/4.5–6.3 OSS',
   'Sky': 'Bortle 8',
@@ -775,6 +776,7 @@
       description: 'Andromeda stretches across the frame, with a bright central region fading into its broad outer disk. This image combines 3 hours of exposure with my Sony α6000 and 55–210mm zoom lens under Bortle 8 skies.',
       specs: specs({ 'Captured': 'July 2026',
   'Integration': '3 h 00 min',
+  'Exposures': '360 × 30 s',
   'Camera': 'Sony α6000',
   'Optics': 'Sony E 55–210mm f/4.5–6.3 OSS',
   'Sky': 'Bortle 8',
@@ -788,6 +790,7 @@
       description: 'Bright central nebulosity gives way to fainter clouds in this view of the Orion Nebula. I captured two hours of exposure with my Sony α6000 and 55–210mm zoom lens under Bortle 8 skies.',
       specs: specs({'Captured': 'June 2026',
   'Integration': '2 h 00 min',
+  'Exposures': '240 × 30 s',
   'Camera': 'Sony α6000',
   'Optics': 'Sony E 55–210mm f/4.5–6.3 OSS',
   'Sky': 'Bortle 8',
@@ -842,7 +845,8 @@
       "description": "The Milky Way above a mountain silhouette, with Sagittarius near the center and Scutum and Serpens toward the right.",
       "specs": {
         "Captured": "November 2025",
-        "Exposure": "20 s",
+        "Integration": "20 s",
+        "Exposures": "1 × 20 s",
         "ISO": "800",
         "Camera": "Sony α6000",
         "Optics": "Sony E 35mm f/1.8 OSS",
@@ -875,9 +879,9 @@
       "description": "A composite combining separate exposures for the lunar surface and the surrounding stars. The Moon uses 200 exposures of 0.1 seconds each, while the star field uses 20 five-second exposures, preserving detail across the difference in brightness.",
       "specs": {
         "Technique": "Lunar and star-field composite",
-        "Lunar exposures": "200 × 0.1 s",
+        "Exposures": "200 × 0.1 s (Moon); 20 × 5 s (stars)",
+        "Integration": "20 s lunar + 1 min 40 s stars",
         "Lunar integration": "20 s",
-        "Star exposures": "20 × 5 s",
         "Star integration": "1 min 40 s"
       },
       "fits": null
@@ -1822,7 +1826,7 @@
     var total=matches.reduce(function(sum,part){return sum+parseInt(part.replace(/,/g,''),10);},0);
     if(!total)return;
     var seen=exposureSeen.has(im.src);exposureSeen.add(im.src);
-    holder.innerHTML='<div class="exposure-build" data-count="'+total+'" role="img" aria-label="'+total+' exposures combined. Total integration: '+esc(im.specs.Integration||'')+'"><div class="exposure-label" aria-hidden="true"><span><span data-exposure-count>'+total.toLocaleString()+'</span> exposures combined</span><span>'+esc(im.specs.Integration||'')+'</span></div><div class="exposure-dots" aria-hidden="true">'+Array.from({length:32},function(_,i){return '<i style="--step:'+i+'"></i>';}).join('')+'</div></div>';
+    holder.innerHTML='<div class="exposure-build" data-count="'+total+'" role="img" aria-label="'+total+' '+(total===1?'exposure':'exposures combined')+'. Total integration: '+esc(im.specs.Integration||'')+'"><div class="exposure-label" aria-hidden="true"><span><span data-exposure-count>'+total.toLocaleString()+'</span> '+(total===1?'exposure':'exposures combined')+'</span><span>'+esc(im.specs.Integration||'')+'</span></div><div class="exposure-dots" aria-hidden="true">'+Array.from({length:Math.min(32,total)},function(_,i){return '<i style="--step:'+i+'"></i>';}).join('')+'</div></div>';
     var el=$('.exposure-build',holder);
     if(seen||reduce()){el.classList.add('in');$$('i',el).forEach(function(dot){dot.style.animation='none';dot.style.opacity='.65';dot.style.transform='none';});}
     else if(detailMotionIO)detailMotionIO.observe(el);else animateExposure(el);
