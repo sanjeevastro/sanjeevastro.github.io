@@ -1615,7 +1615,7 @@
     });
     out += '<text x="343" y="252" text-anchor="middle" fill="#c6c3bc" font-size="12">Brightness (dark → bright)</text>';
     histPlot.innerHTML = out;
-    var groups=$('[data-hist-curve]',histPlot),t0=null,duration=initial?420:220;
+    var groups=$$('[data-hist-curve]',histPlot),t0=null,duration=initial?420:220;
     function renderHistogram(now){
       if(t0===null)t0=now;
       var p=reduce()?1:Math.min(1,(now-t0)/duration),e=1-Math.pow(1-p,3);
