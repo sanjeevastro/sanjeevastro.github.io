@@ -338,6 +338,43 @@
   .zoom-toolbar .zoom-fit { font-size: 0.8rem; min-width: 60px; font-variant-numeric: tabular-nums; }
   .zoom-hint { margin-top: 10px; color: var(--muted); text-align: center; font-size: 0.78rem; }
 
+
+  /* Explore */
+  .explore-layout { display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 24px; margin-top: 32px; align-items: start; }
+  .sky-frame { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: 24px; background: #090b0e; }
+  #sky-map { width: 100%; height: min(65vh, 680px); min-height: 420px; }
+  .sky-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 20px; margin-bottom: 16px; font-size: 0.85rem; }
+  .sky-controls button, .sky-targets button { border: 1px solid var(--line); border-radius: 980px; background: var(--surface); padding: 8px 16px; cursor: pointer; }
+  .sky-controls button:hover, .sky-targets button:hover { border-color: var(--accent); }
+  .sky-controls label { display: inline-flex; align-items: center; gap: 7px; cursor: pointer; }
+  .sky-controls input { accent-color: var(--accent); }
+  .sky-targets { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+  .sky-targets button { font-size: 0.8rem; }
+  .sky-targets button[aria-pressed="true"] { background: var(--text); color: var(--bg); }
+  .sky-preview { padding: 20px; border: 1px solid var(--line); border-radius: 24px; background: var(--surface); }
+  .sky-preview img { width: 100%; height: 220px; object-fit: contain; border-radius: 14px; display: block; }
+  .sky-preview h2 { font-size: 1.7rem; margin-top: 20px; }
+  .sky-preview .sky-note { color: var(--muted); font-size: 0.85rem; margin: 16px 0; }
+  .sky-preview .btn { font-size: 0.85rem; padding: 10px 18px; }
+  .sky-credit, .sky-status { color: var(--muted); font-size: 0.8rem; margin-top: 12px; }
+  .sky-status { min-height: 1.6em; }
+  .sky-frame .aladin-container { font-family: var(--sans); }
+  @media (max-width: 900px) {
+    .explore-layout { grid-template-columns: minmax(0,1fr); }
+    .sky-preview { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 20px; }
+    .sky-preview h2 { margin-top: 0; }
+  }
+  @media (max-width: 640px) {
+    :root { --nav-h: 88px; }
+    .nav-inner { grid-template-columns: 1fr; grid-template-rows: 40px 32px; gap: 0; padding-block: 6px; }
+    .wordmark { justify-self: center; }
+    .wordmark img { width: 140px; height: 36px; object-fit: contain; transform: none; }
+    .site-nav { width: 100%; justify-content: space-between; gap: 10px; transform: none; font-size: 0.78rem; }
+    #sky-map { height: 54vh; min-height: 340px; }
+    .sky-preview { grid-template-columns: 1fr; }
+    .sky-preview img { height: 180px; }
+  }
+
 </style>
 </head>
 
@@ -350,6 +387,7 @@
     <nav class="site-nav" aria-label="Main">
       <a href="#/" data-route="home">Home</a>
       <a href="#/gallery" data-route="gallery">Gallery</a>
+      <a href="#/explore" data-route="explore">Explore</a>
       <a href="#/equipment" data-route="equipment">Equipment</a>
       <a href="#/about" data-route="about">About</a>
     </nav>
@@ -417,6 +455,29 @@
     </div>
   </section>
 
+  <section class="view" data-view="explore" hidden>
+    <div class="wrap page">
+      <h1 class="page-title">Explore the sky.</h1>
+      <p class="page-lede">A universe of photographs, connected. Pan across the sky, choose a marker, and see the view through my camera.</p>
+      <div class="explore-layout">
+        <div>
+          <div class="sky-controls" aria-label="Sky map controls">
+            <button type="button" id="sky-reset">Whole sky</button>
+            <button type="button" id="sky-closer" aria-label="Zoom in on sky">+</button>
+            <button type="button" id="sky-farther" aria-label="Zoom out of sky">−</button>
+            <label><input type="checkbox" id="sky-lines" checked>Constellations</label>
+            <label><input type="checkbox" id="sky-grid">Coordinate grid</label>
+          </div>
+          <div class="sky-frame"><div id="sky-map" aria-label="Interactive sky map of my photographs"></div></div>
+          <p class="sky-status" id="sky-status" role="status">The sky map loads when you open Explore.</p>
+          <p class="sky-credit">Sky imagery: <a href="https://aladin.cds.unistra.fr/" target="_blank" rel="noopener">Aladin Lite / CDS</a>, DSS2 (STScI). Constellation lines: <a href="https://github.com/ofrohn/d3-celestial" target="_blank" rel="noopener">D3-Celestial</a>. Markers locate targets, not the exact edges of my photographs.</p>
+          <div class="sky-targets" id="sky-targets" aria-label="Choose a photograph"></div>
+        </div>
+        <aside class="sky-preview" id="sky-preview" aria-label="Selected photograph"></aside>
+      </div>
+    </div>
+  </section>
+
   <!-- ================= EQUIPMENT ================= -->
   <section class="view" data-view="equipment" hidden>
     <div class="wrap page">
@@ -456,6 +517,7 @@
     <nav aria-label="Footer">
       <a href="#/">Home</a>
       <a href="#/gallery">Gallery</a>
+      <a href="#/explore">Explore</a>
       <a href="#/equipment">Equipment</a>
       <a href="#/about">About</a>
     </nav>
@@ -696,6 +758,7 @@
   var TITLES = {
     home: 'Sanjeev Astro',
     gallery: 'Gallery | Sanjeev Astro',
+    explore: 'Explore | Sanjeev Astro',
     equipment: 'Equipment | Sanjeev Astro',
     about: 'About | Sanjeev Astro'
   };
@@ -925,6 +988,89 @@
   var currentRoute = null;
   function refreshHeader() { header.classList.toggle('solid', window.scrollY > 8 || currentRoute !== 'home'); }
 
+
+  /* Sky coordinates in degrees (ICRS/J2000 target centers).
+     Wide-field landscape markers are representative region centers. */
+  var SKY_TARGETS = {
+    'pleiades-nov-2026.jpeg': { ra:56.75, dec:24.1167, fov:6, region:'Taurus' },
+    'tracked-deep-sky.JPG': { ra:210.8023, dec:54.349, fov:2.5, region:'Ursa Major' },
+    'image-03.jpg': { ra:10.6847, dec:41.2688, fov:6, region:'Andromeda' },
+    'image-04.jpg': { ra:83.8221, dec:-5.3911, fov:3, region:'Orion' },
+    'north-america-nebula-nov-2026.jpeg': { ra:314.8, dec:44.5, fov:6, region:'Cygnus' },
+    'rosette-nebula-nov-2026.jpeg': { ra:98.0, dec:4.95, fov:4, region:'Monoceros' },
+    'triangulum-galaxy.jpeg': { ra:23.4621, dec:30.66, fov:3.5, region:'Triangulum' },
+    'milky-way-italy.jpg': { ra:305, dec:40, fov:55, region:'Cygnus', approximate:true },
+    'milky-way-sagittarius-nov-2025.jpg': { ra:280, dec:-20, fov:65, region:'Sagittarius', approximate:true }
+  };
+  var skyMap = null, skyLoading = false, skyLines = null, skyCatalog = null, skySelected = 0, skyLibraryPromise = null;
+  function skyTarget(im) { return SKY_TARGETS[im.src.split('?')[0].split('/').pop()] || null; }
+  function selectSkyPhoto(i, move) {
+    skySelected = i;
+    var im = IMAGES[i], target = skyTarget(im);
+    $$('#sky-targets button').forEach(function (b) { b.setAttribute('aria-pressed', +b.dataset.skyIndex === i ? 'true' : 'false'); });
+    $('#sky-preview').innerHTML = '<img src="' + esc(im.src) + '" alt="' + esc(im.alt) + '"><div><h2>' + esc(im.title) + '</h2><p class="desig">' + esc(im.designation) + '</p><p class="sky-note">' +
+      (target ? esc(target.region) + (target.approximate ? ' · Approximate region marker' : ' · Target location') : 'A lunar composite. The Moon moves across the sky, so this photograph has no fixed map marker.') +
+      '</p><button class="btn" type="button" data-open="' + i + '">View photograph</button></div>';
+    if (move && skyMap && target) { skyMap.gotoRaDec(target.ra,target.dec); skyMap.setFoV(target.fov); }
+  }
+  $('#sky-targets').innerHTML = IMAGES.map(function(im,i){ return '<button type="button" data-sky-index="'+i+'" aria-pressed="false">'+esc(im.title)+'</button>'; }).join('');
+  $('#sky-targets').addEventListener('click',function(e){var b=e.target.closest('[data-sky-index]');if(b)selectSkyPhoto(+b.dataset.skyIndex,true);});
+  selectSkyPhoto(0,false);
+  function loadSkyLibrary() {
+    if (window.A && window.A.init) return Promise.resolve(window.A.init);
+    if (skyLibraryPromise) return skyLibraryPromise;
+    skyLibraryPromise = new Promise(function(resolve,reject){
+      var script=document.createElement('script'); script.src='https://aladin.cds.unistra.fr/AladinLite/api/v3/3.9.3/aladin.js'; script.async=true;
+      var timer=setTimeout(function(){reject(new Error('Sky map download timed out'));},20000);
+      script.onload=function(){clearTimeout(timer);if(!window.A){reject(new Error('Sky map unavailable'));return;}
+        var initTimer=setTimeout(function(){reject(new Error('Sky map initialization timed out'));},20000);
+        Promise.resolve(window.A.init).then(function(){clearTimeout(initTimer);resolve();},function(e){clearTimeout(initTimer);reject(e);});
+      };
+      script.onerror=function(){clearTimeout(timer);reject(new Error('Sky map could not load'));};
+      document.head.appendChild(script);
+    });
+    return skyLibraryPromise;
+  }
+  function addSkyOverlay(overlay) {
+    if (skyMap.addOverlay) skyMap.addOverlay(overlay); else skyMap.addCatalog(overlay);
+  }
+  function loadConstellationLines() {
+    fetch('https://raw.githubusercontent.com/ofrohn/d3-celestial/master/data/constellations.lines.json').then(function(r){if(!r.ok)throw new Error('Constellation data unavailable');return r.json();}).then(function(data){
+      var overlay=A.graphicOverlay({name:'Constellations',color:'rgba(180,190,210,0.45)',lineWidth:1});
+      addSkyOverlay(overlay);
+      data.features.forEach(function(f){
+        var lines=f.geometry.type==='MultiLineString'?f.geometry.coordinates:[f.geometry.coordinates];
+        lines.forEach(function(line){overlay.addFootprints([A.polyline(line.map(function(p){return [(p[0]+360)%360,p[1]];}))]);});
+      });
+      skyLines=overlay;if(!$('#sky-lines').checked)skyLines.hide();
+    }).catch(function(){ $('#sky-lines').checked=false;$('#sky-lines').disabled=true; });
+  }
+  function initSkyMap() {
+    if(skyMap||skyLoading)return;
+    skyLoading=true;$('#sky-status').textContent='Loading the sky…';
+    loadSkyLibrary().then(function(){
+      skyMap=A.aladin('#sky-map',{survey:'P/DSS2/color',target:'0 +25',fov:300,projection:'AIT',cooFrame:'equatorial',
+        showReticle:false,showLayersControl:false,showGotoControl:false,showShareControl:false,showFrame:false,
+        showCooLocation:false,showCooGrid:false,showProjectionControl:false,showZoomControl:false,showFullscreenControl:true,
+        showStatusBar:false,showSettingsControl:false,showSimbadPointerControl:false,backgroundColor:'rgb(9,11,14)'});
+      skyCatalog=A.catalog({name:'My photographs',color:'#63b5ab',sourceSize:14,shape:'circle',displayLabel:true,labelColumn:'name',labelColor:'#e9e6df',labelFont:'12px sans-serif',onClick:function(source){if(source&&source.data)selectSkyPhoto(source.data.index,false);}});
+      addSkyOverlay(skyCatalog);
+      skyCatalog.addSources(IMAGES.map(function(im,i){var t=skyTarget(im);return t?A.source(t.ra,t.dec,{name:im.title,index:i}):null;}).filter(Boolean));
+      loadConstellationLines();skyLoading=false;
+      $('#sky-status').textContent='Drag to explore · Scroll or pinch to zoom · Select a teal marker or a photograph below';
+      if($('#sky-grid').checked)skyMap.setCooGrid(true);
+    }).catch(function(){
+      skyLoading=false;skyLibraryPromise=null;
+      $('#sky-status').innerHTML='The sky map could not load on this device or connection. You can still explore every photograph below. <button class="text-link software-trigger" id="sky-retry" type="button">Try again</button>';
+      $('#sky-retry').addEventListener('click',initSkyMap);
+    });
+  }
+  $('#sky-reset').addEventListener('click',function(){if(skyMap){skyMap.gotoRaDec(0,25);skyMap.setFoV(300);}});
+  $('#sky-closer').addEventListener('click',function(){if(skyMap)skyMap.setFoV(Math.max(0.1,skyMap.getFov()[0]/1.7));});
+  $('#sky-farther').addEventListener('click',function(){if(skyMap)skyMap.setFoV(Math.min(360,skyMap.getFov()[0]*1.7));});
+  $('#sky-grid').addEventListener('change',function(){if(skyMap)skyMap.setCooGrid(this.checked);});
+  $('#sky-lines').addEventListener('change',function(){if(skyLines){if(this.checked)skyLines.show();else skyLines.hide();}});
+
   /* ---------- Tabs (hash routing with a soft cross-fade) ---------- */
   var views = {}; $$('.view').forEach(function (v) { views[v.dataset.view] = v; });
   var switchToken = 0;
@@ -933,7 +1079,7 @@
     $$('.site-nav a').forEach(function (a) { if (a.dataset.route === name) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     document.title = TITLES[name];
   }
-  function afterShow() { refreshHeader(); positionThumb(); updateRail(); kick(); }
+  function afterShow() { refreshHeader(); positionThumb(); updateRail(); kick(); if(currentRoute === "explore") initSkyMap(); }
   function toTop() { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); }
   function go(name) {
     if (name === currentRoute) return;
