@@ -190,7 +190,8 @@
 
   /* Gallery */
   .seg { position: relative; display: inline-flex; padding: 4px; margin: clamp(32px, 5vw, 48px) 0; background: var(--surface); border-radius: 980px; }
-  .seg button { position: relative; z-index: 1; background: none; border: 0; cursor: pointer; color: var(--muted); font-size: 0.9rem; padding: 8px 20px; border-radius: 980px; transition: color 400ms var(--ease); }
+  .seg { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .seg button { flex-shrink: 0; white-space: nowrap; position: relative; z-index: 1; background: none; border: 0; cursor: pointer; color: var(--muted); font-size: 0.9rem; padding: 8px 20px; border-radius: 980px; transition: color 400ms var(--ease); }
   .seg button:hover { color: var(--text); }
   .seg button[aria-pressed="true"] { color: var(--bg); }
   .seg-thumb { position: absolute; top: 4px; bottom: 4px; left: 0; width: 0; background: var(--text); border-radius: 980px; transition: transform 550ms var(--ease-out), width 550ms var(--ease-out); }
@@ -554,6 +555,38 @@
         "Camera": "Sony α6000",
         "Optics": "Sony E 35mm f/1.8 OSS (recalled)",
         "Processing": "Lightroom Classic, Photoshop"
+      },
+      "fits": null
+    },
+    {
+      "title": "Triangulum Galaxy",
+      "designation": "Messier 33",
+      "category": "Deep sky",
+      "src": "images/triangulum-galaxy.jpeg",
+      "alt": "The Triangulum Galaxy with faint blue spiral structure and a brighter central region amid foreground stars.",
+      "description": "Faint blue spiral structure surrounds the brighter center of the Triangulum Galaxy. Captured under Bortle 8 skies with my Sony α6000 and 55–210mm zoom lens, this image combines 483 thirty-second exposures for a total of 4 hours, 1 minute, and 30 seconds.",
+      "specs": {
+        "Integration": "4 h 01 min 30 s",
+        "Exposures": "483 × 30 s",
+        "Camera": "Sony α6000",
+        "Optics": "Sony E 55–210mm f/4.5–6.3 OSS",
+        "Sky": "Bortle 8"
+      },
+      "fits": null
+    },
+    {
+      "title": "Moon and Stars",
+      "designation": "Moon",
+      "category": "Solar system",
+      "src": "images/moon-and-stars-composite.jpeg",
+      "alt": "A composite showing the partially illuminated Moon, with craters along its shadow boundary, against a field of stars.",
+      "description": "A composite combining separate exposures for the lunar surface and the surrounding stars. The Moon uses 200 exposures of 0.1 seconds each, while the star field uses 20 five-second exposures, preserving detail across the difference in brightness.",
+      "specs": {
+        "Technique": "Lunar and star-field composite",
+        "Lunar exposures": "200 × 0.1 s",
+        "Lunar integration": "20 s",
+        "Star exposures": "20 × 5 s",
+        "Star integration": "1 min 40 s"
       },
       "fits": null
     }
