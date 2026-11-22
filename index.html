@@ -462,6 +462,28 @@
 
   html.locked .sky-fullscreen { visibility: hidden; }
   .sky-arrival { position: absolute; left: 50%; top: 50%; width: 24px; height: 24px; margin: -12px; border: 1px solid var(--accent); border-radius: 50%; pointer-events: none; z-index: 2; }
+
+  .signature-art { display: block; width: 160px; height: auto; transform: translateY(-13px); }
+  .signature-stroke { fill: none; stroke: white; stroke-width: 18; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: write-signature var(--time) var(--start) linear forwards; }
+  .signature-finish { opacity: 0; animation: finish-signature 1ms 2.55s forwards; }
+  @keyframes write-signature { to { stroke-dashoffset: 0; } }
+  @keyframes finish-signature { to { opacity: 1; } }
+  .light-explorer.draw-divider, .site-footer.draw-divider { position: relative; border-top-color: transparent; }
+  .draw-divider::before { content: ""; position: absolute; top: -1px; left: 0; width: 100%; height: 1px; background: var(--line); transform: scaleX(0); transform-origin: center; transition: transform 650ms var(--ease-out); pointer-events: none; }
+  .draw-divider.divider-in::before { transform: scaleX(1); }
+  .exposure-build { margin-top: 20px; color: var(--muted); font-size: .78rem; }
+  .exposure-build .exposure-label { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 9px; font-variant-numeric: tabular-nums; }
+  .exposure-dots { display: grid; grid-template-columns: repeat(32,minmax(0,1fr)); gap: 3px; }
+  .exposure-dots i { display: block; height: 4px; border-radius: 2px; background: var(--accent); opacity: .08; transform: scaleY(.5); }
+  .exposure-build.in .exposure-dots i { animation: exposure-dot 320ms calc(var(--step)*24ms) var(--ease-out) both; }
+  @keyframes exposure-dot { to { opacity: .65; transform: scaleY(1); } }
+  @media (prefers-reduced-motion: reduce) {
+    .signature-stroke { stroke-dashoffset: 0; }
+    .signature-finish { opacity: 1; }
+    .draw-divider::before { transform: scaleX(1); }
+    .exposure-dots i { opacity: .65; transform: none; }
+  }
+
 </style>
 </head>
 
@@ -470,7 +492,7 @@
 
 <header class="site-header" id="site-header">
   <div class="wrap nav-inner">
-    <a class="wordmark" href="#/" aria-label="Sanjeev Astro"><img src="images/signature.png" alt="Sanjeev Patel"></a>
+    <a class="wordmark" href="#/" aria-label="Sanjeev Astro"><svg class="signature-art" viewBox="0 0 677 369" aria-hidden="true" focusable="false"><defs><mask id="signature-ink" maskUnits="userSpaceOnUse" x="0" y="0" width="677" height="369"><path class="signature-stroke" d="M156 159 C218 124 196 99 153 126 C104 151 108 166 140 180 C197 202 160 225 120 235 C85 244 118 210 164 193" pathLength="1" style="--start:0s;--time:0.48s"/><path class="signature-stroke" d="M178 193 Q215 165 207 186 L187 203 Q179 210 188 191 M210 180 L204 202 L231 177 L221 201 Q239 177 245 185 Q240 213 263 189" pathLength="1" style="--start:0.42s;--time:0.42s"/><path class="signature-stroke" d="M273 177 Q256 236 232 263 Q208 284 220 252 Q233 220 276 196 Q311 182 289 176 Q268 184 279 198 Q294 213 318 184 Q330 174 317 178 Q298 192 311 201 Q325 208 339 182 L337 204 Q351 193 363 174" pathLength="1" style="--start:0.76s;--time:0.58s"/><path class="signature-stroke" d="M270 168 L275 163" pathLength="1" style="--start:0.96s;--time:0.08s"/><path class="signature-stroke" d="M365 158 Q342 143 382 125 Q435 106 456 130 Q484 162 415 181 Q365 199 387 178 L425 140 M415 156 L384 225" pathLength="1" style="--start:1.25s;--time:0.48s"/><path class="signature-stroke" d="M436 191 Q469 166 459 186 L438 204 Q427 208 437 188 M461 179 L456 201 L482 179" pathLength="1" style="--start:1.65s;--time:0.26s"/><path class="signature-stroke" d="M504 134 Q472 181 470 211 L474 224 M468 160 L521 158" pathLength="1" style="--start:1.85s;--time:0.28s"/><path class="signature-stroke" d="M480 193 Q522 165 500 180 Q480 193 488 202 Q500 212 525 183 Q552 157 557 124 Q545 118 523 178 Q507 211 532 207 L571 195" pathLength="1" style="--start:2.05s;--time:0.42s"/><rect class="signature-finish" width="677" height="369" fill="white"/></mask></defs><image href="images/signature.png" width="677" height="369" mask="url(#signature-ink)"/></svg></a>
     <nav class="site-nav" aria-label="Main">
       <a href="#/" data-route="home">Home</a>
       <a href="#/gallery" data-route="gallery">Gallery</a>
@@ -696,6 +718,7 @@
           <p class="desig" id="v-desig"></p>
           <p class="v-desc" id="v-desc"></p>
           <dl class="specs" id="v-specs"></dl>
+          <div id="v-exposure"></div>
           <div class="v-fits" id="v-fits"></div>
         </div>
       </div>
@@ -1126,13 +1149,19 @@
   }
   function glowSkyTarget(i){
     if(reduce())return;
-    var pin=$('[data-sky-photo="'+i+'"] circle');
-    if(pin){skyArrivalAnimation=pin.animate([{opacity:.6,filter:'drop-shadow(0 0 0px #63b5ab)'},{opacity:1,filter:'drop-shadow(0 0 5px #63b5ab)'},{opacity:1,filter:'drop-shadow(0 0 0px #63b5ab)'}],{duration:750,easing:'ease-out'});}
-    else {
-      var ring=document.createElement('span');ring.className='sky-arrival';ring.setAttribute('aria-hidden','true');$('#sky-map').appendChild(ring);
-      skyArrivalAnimation=ring.animate([{opacity:0,transform:'scale(.7)'},{opacity:.65,offset:.25},{opacity:0,transform:'scale(2)'}],{duration:750,easing:'ease-out'});
-      skyArrivalAnimation.onfinish=function(){ring.remove();};
+    var pin=$('[data-sky-photo="'+i+'"] circle'),ring;
+    if(pin){
+      ring=document.createElementNS('http://www.w3.org/2000/svg','circle');
+      var r=+pin.getAttribute('r');
+      ring.setAttribute('r',r);ring.setAttribute('fill','none');ring.setAttribute('stroke','#63b5ab');
+      ring.setAttribute('stroke-width',Math.max(.05,r*.18));ring.classList.add('sky-arrival');
+      ring.style.position='static';ring.style.margin='0';pin.parentNode.appendChild(ring);
+      skyArrivalAnimation=ring.animate([{opacity:.7,transform:'scale(1)'},{opacity:0,transform:'scale(3)'}],{duration:850,easing:'cubic-bezier(.16,1,.3,1)'});
+    }else{
+      ring=document.createElement('span');ring.className='sky-arrival';ring.setAttribute('aria-hidden','true');$('#sky-map').appendChild(ring);
+      skyArrivalAnimation=ring.animate([{opacity:.7,transform:'scale(.7)'},{opacity:0,transform:'scale(2.6)'}],{duration:850,easing:'ease-out'});
     }
+    skyArrivalAnimation.onfinish=function(){ring.remove();skyArrivalAnimation=null;};
   }
   function travelSky(target,i){
     cancelSkyJourney();
@@ -1362,7 +1391,7 @@
     {name:'Microwaves',lo:1000000,hi:1000000000,color:'#917453',body:'Microwaves are long-wavelength light, within the broader radio spectrum. They can reveal cold material and the early universe, beyond what these cameras record.'},
     {name:'Radio',lo:1000000000,hi:1000000000000,color:'#657e8c',body:'Radio astronomy explores much longer wavelengths with different detectors. The optical targets shown here can also be studied at other wavelengths, but these images record visible light.'}
   ];
-  var lightPhotoIndex=0,lightReference='ha';
+  var lightPhotoIndex=0,lightReference='ha',lightSweepFrame=0,lightDisplayed=null;
   var lightSelect=$('#light-photo-select'),lightSlider=$('#light-wavelength');
   function lightProfile(im) {
     var src=im.src.split('?')[0];
@@ -1398,8 +1427,8 @@
     $('#spectrum-explanation').textContent=LIGHT_BANDS[active].body;
     $$('#spectrum-bands button').forEach(function(b){b.setAttribute('aria-pressed',+b.dataset.band===active?'true':'false');});
   }
-  function drawVisibleSpectrum() {
-    var profile=lightProfile(IMAGES[lightPhotoIndex]),nm=+lightSlider.value,x=function(n){return 25+(n-380)/370*650;};
+  function drawVisibleSpectrum(displayNm) {
+    var profile=lightProfile(IMAGES[lightPhotoIndex]),nm=typeof displayNm==='number'?displayNm:+lightSlider.value,x=function(n){return 25+(n-380)/370*650;};
     var stops='';for(var n=380;n<=750;n+=10)stops+='<stop offset="'+((n-380)/370*100)+'%" stop-color="'+visibleColor(n)+'"/>';
     var out='<defs><linearGradient id="visible-rainbow">'+stops+'</linearGradient></defs><rect x="25" y="56" width="650" height="38" rx="8" fill="url(#visible-rainbow)"/>';
     var lo=profile.kind==='blue'?430:380,hi=profile.kind==='blue'?500:750;
@@ -1410,9 +1439,10 @@
       values.forEach(function(v){out+='<line x1="'+x(v)+'" x2="'+x(v)+'" y1="48" y2="98" stroke="#fff" stroke-opacity=".85" stroke-width="1.4"/>';});
       out+='<text x="'+x(l.nm)+'" y="'+top+'" text-anchor="middle" fill="#e9e6df" font-size="12">'+l.label+'</text><line x1="'+x(l.nm)+'" x2="'+x(l.nm)+'" y1="'+(top+4)+'" y2="48" stroke="#9a9da3" stroke-width=".8"/>';
     });
-    out+='<path d="M'+x(nm)+',47 l-5,-7 h10 Z" fill="#fff"/>';
+    out+='<rect x="'+(x(nm)-3)+'" y="56" width="6" height="38" fill="#fff" opacity=".12"/><line x1="'+x(nm)+'" x2="'+x(nm)+'" y1="56" y2="94" stroke="#fff" stroke-opacity=".8"/><path d="M'+x(nm)+',47 l-5,-7 h10 Z" fill="#fff"/>';
     [380,450,500,550,600,650,750].forEach(function(n){out+='<text x="'+x(n)+'" y="137" text-anchor="middle" fill="#9a9da3" font-size="11">'+n+'</text>';});
     out+='<text x="350" y="166" text-anchor="middle" fill="#c6c3bc" font-size="12">Wavelength in nanometers (nm)</text>';
+    lightDisplayed=nm;
     $('#visible-reference').innerHTML=out;
     $('#light-reading').textContent=nm.toFixed(1)+' nm';$('#light-swatch').style.background=visibleColor(nm);
     lightSlider.setAttribute('aria-valuetext',nm.toFixed(1)+' nanometers');
@@ -1423,7 +1453,19 @@
     if(line)lightSlider.value=line.nm;
     $$('#spectral-lines button').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.line===id?'true':'false');});
     $('#line-explanation').innerHTML=line?'<h4>'+esc(line.name)+' · '+(line.values?'671.6 &amp; 673.1':line.nm.toFixed(1))+' nm</h4><p>'+esc(line.body)+'</p>':'<h4>A point in visible light</h4><p>Move across the rainbow to compare wavelengths. A color on this bar is a reference, not a measurement from the photograph.</p>';
-    drawVisibleSpectrum();
+    sweepLightTo(+lightSlider.value);
+  }
+  function sweepLightTo(nm){
+    cancelAnimationFrame(lightSweepFrame);
+    if(lightDisplayed===null||reduce()){drawVisibleSpectrum(nm);return;}
+    var from=lightDisplayed,t0=null;
+    function frame(now){
+      if(t0===null)t0=now;
+      var p=Math.min(1,(now-t0)/480),e=1-Math.pow(1-p,3);
+      drawVisibleSpectrum(from+(nm-from)*e);
+      if(p<1)lightSweepFrame=requestAnimationFrame(frame);else lightSweepFrame=0;
+    }
+    lightSweepFrame=requestAnimationFrame(frame);
   }
   function selectLightPhoto(i) {
     lightPhotoIndex=i;var im=IMAGES[i],profile=lightProfile(im);
@@ -1436,7 +1478,12 @@
   $('#spectral-lines').innerHTML=LIGHT_LINES.map(function(l){return '<button type="button" data-line="'+l.id+'" aria-pressed="false">'+l.label+' · '+(l.values?'671.6 / 673.1':l.nm)+' nm</button>';}).join('');
   $('#spectral-lines').addEventListener('click',function(e){var b=e.target.closest('[data-line]');if(b)selectLightReference(b.dataset.line);});
   lightSelect.addEventListener('change',function(){selectLightPhoto(+this.value);});
-  lightSlider.addEventListener('input',function(){lightReference=null;$$('#spectral-lines button').forEach(function(b){b.setAttribute('aria-pressed','false');});drawVisibleSpectrum();});
+  lightSlider.addEventListener('input',function(){
+    cancelAnimationFrame(lightSweepFrame);lightSweepFrame=0;lightReference=null;
+    $$('#spectral-lines button').forEach(function(b){b.setAttribute('aria-pressed','false');});
+    $('#line-explanation').innerHTML='<h4>A point in visible light</h4><p>Move across the rainbow to compare wavelengths. A color on this bar is a reference, not a measurement from the photograph.</p>';
+    drawVisibleSpectrum();
+  });
   var firstEmission=IMAGES.findIndex(function(im){return im.src.indexOf('rosette')>=0;});
   lightSelect.value=firstEmission>=0?firstEmission:0;drawFullSpectrum(3);selectLightPhoto(+lightSelect.value);
 
@@ -1605,7 +1652,7 @@
     var targetHeights=histogramData.counts.map(function(bins){return bins.map(function(n){return scaled(n)/scaled(max);});});
     var targetAlpha=enabled.map(function(on){return on?1:0;});
     var initial=!histogramVisual;
-    var from=histogramVisual||{heights:targetHeights.map(function(b){return b.map(function(){return 0;});}),alpha:[0,0,0]};
+    var from=histogramVisual||{heights:targetHeights,alpha:[1,1,1]};
     cancelAnimationFrame(histogramFrame);
     colors.forEach(function(color,channel){
       out+='<g data-hist-curve="'+channel+'"><path fill="'+color+'" fill-opacity=".08"/><polyline fill="none" stroke="'+color+'" stroke-width="1.6" stroke-linejoin="round"/></g>';
@@ -1615,7 +1662,7 @@
     });
     out += '<text x="343" y="252" text-anchor="middle" fill="#c6c3bc" font-size="12">Brightness (dark → bright)</text>';
     histPlot.innerHTML = out;
-    var groups=$$('[data-hist-curve]',histPlot),t0=null,duration=initial?420:220;
+    var groups=$$('[data-hist-curve]',histPlot),t0=null,duration=initial?650:220;
     function renderHistogram(now){
       if(t0===null)t0=now;
       var p=reduce()?1:Math.min(1,(now-t0)/duration),e=1-Math.pow(1-p,3);
@@ -1624,10 +1671,21 @@
         var points=histogramVisual.heights[c].map(function(n,j){return (left+width*j/255).toFixed(2)+','+(top+height*(1-n)).toFixed(2);});
         group.setAttribute('opacity',histogramVisual.alpha[c].toFixed(3));
         $('path',group).setAttribute('d','M66,210 L'+points.join(' L')+' L620,210 Z');
-        $('polyline',group).setAttribute('points',points.join(' '));
+        var line=$('polyline',group);
+        line.setAttribute('points',points.join(' '));
+        if(initial&&!reduce()){
+          line.style.strokeDashoffset=String(+line.style.strokeDasharray*(1-e));
+          $('path',group).setAttribute('opacity',String(e*.6));
+        }
       });
       if(p<1)histogramFrame=requestAnimationFrame(renderHistogram);else histogramFrame=0;
     }
+    if(initial&&!reduce())groups.forEach(function(group){
+      var line=$('polyline',group);
+      var points=targetHeights[+group.dataset.histCurve].map(function(n,j){return (left+width*j/255).toFixed(2)+','+(top+height*(1-n)).toFixed(2);});
+      line.setAttribute('points',points.join(' '));
+      var length=line.getTotalLength();line.style.strokeDasharray=length;line.style.strokeDashoffset=length;
+    });
     renderHistogram(performance.now());
     var names = ['Red', 'Green', 'Blue'].filter(function (name, i) { return enabled[i]; });
     $('#hist-svg-title').textContent = 'Brightness histogram — ' + histogramData.title;
@@ -1709,8 +1767,54 @@
     });
   });
 
+  var exposureFrame=0,exposureSeen=new Set();
+  function animateExposure(el){
+    if(!el.isConnected||el.classList.contains('in'))return;
+    el.classList.add('in');
+    var label=$('[data-exposure-count]',el),total=+el.dataset.count;
+    if(reduce()){label.textContent=total.toLocaleString();return;}
+    var start=null;
+    function frame(now){
+      if(!el.isConnected)return;
+      if(start===null)start=now;
+      var p=Math.min(1,(now-start)/950);
+      label.textContent=Math.round(total*(1-Math.pow(1-p,3))).toLocaleString();
+      if(p<1)exposureFrame=requestAnimationFrame(frame);else exposureFrame=0;
+    }
+    exposureFrame=requestAnimationFrame(frame);
+  }
+  var detailMotionIO='IntersectionObserver' in window?new IntersectionObserver(function(entries){
+    entries.forEach(function(e){if(!e.isIntersecting)return;
+      if(e.target.classList.contains('exposure-build'))animateExposure(e.target);
+      else e.target.classList.add('divider-in');
+      detailMotionIO.unobserve(e.target);
+    });
+  },{threshold:.25}):null;
+  $$('.light-explorer,.site-footer').forEach(function(el){
+    el.classList.add('draw-divider');
+    if(detailMotionIO)detailMotionIO.observe(el);else el.classList.add('divider-in');
+  });
+  function fillExposure(im){
+    cancelAnimationFrame(exposureFrame);exposureFrame=0;
+    var holder=$('#v-exposure'),old=$('.exposure-build',holder);
+    if(old&&detailMotionIO)detailMotionIO.unobserve(old);
+    holder.innerHTML='';
+    var exposure=im.specs.Exposures;
+    if(!exposure)return;
+    var matches=String(exposure).match(/([\d,]+)\s*[×x]/g);
+    if(!matches)return;
+    var total=matches.reduce(function(sum,part){return sum+parseInt(part.replace(/,/g,''),10);},0);
+    if(!total)return;
+    var seen=exposureSeen.has(im.src);exposureSeen.add(im.src);
+    holder.innerHTML='<div class="exposure-build" data-count="'+total+'" role="img" aria-label="'+total+' exposures combined. Total integration: '+esc(im.specs.Integration||'')+'"><div class="exposure-label" aria-hidden="true"><span><span data-exposure-count>'+total.toLocaleString()+'</span> exposures combined</span><span>'+esc(im.specs.Integration||'')+'</span></div><div class="exposure-dots" aria-hidden="true">'+Array.from({length:32},function(_,i){return '<i style="--step:'+i+'"></i>';}).join('')+'</div></div>';
+    var el=$('.exposure-build',holder);
+    if(seen||reduce()){el.classList.add('in');$$('i',el).forEach(function(dot){dot.style.animation='none';dot.style.opacity='.65';dot.style.transform='none';});}
+    else if(detailMotionIO)detailMotionIO.observe(el);else animateExposure(el);
+  }
+
   function fillViewer(i) {
     var im = IMAGES[i];
+    fillExposure(im);
     vMedia.className = 'viewer-media'; vMedia.setAttribute('data-file', im.src);
     resetPhotoZoom();
     vMedia.innerHTML = '<div class="zoom-stage"><img src="' + esc(im.src) + '" alt="' + esc(im.alt) + '" draggable="false" data-fallback></div>';
@@ -1765,6 +1869,7 @@
     if (!vs.open || vs.closing) return;
     vs.closing = true;
     histogramToken++;
+    cancelAnimationFrame(exposureFrame);exposureFrame=0;
     cancelAnimationFrame(histogramFrame);histogramFrame=0;
     resetPhotoZoom();
     var origin = findOrigin(vs.index);
