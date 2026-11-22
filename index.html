@@ -346,7 +346,7 @@
   .star-map-svg [data-sky-photo]:focus circle { stroke:#fff; stroke-width:3; }
   /* Explore */
   .explore-layout { display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 24px; margin-top: 32px; align-items: start; }
-  .sky-frame { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: 24px; background: #090b0e; }
+  .sky-frame { isolation: isolate; position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: 24px; background: #090b0e; }
   #sky-map { touch-action: none; width: 100%; height: min(65vh, 680px); min-height: 420px; }
   .sky-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 20px; margin-bottom: 16px; font-size: 0.85rem; }
   .sky-controls button, .sky-targets button { border: 1px solid var(--line); border-radius: 980px; background: var(--surface); padding: 8px 16px; cursor: pointer; }
@@ -363,7 +363,7 @@
   .sky-preview .btn { font-size: 0.85rem; padding: 10px 18px; }
   .sky-credit, .sky-status { color: var(--muted); font-size: 0.8rem; margin-top: 12px; }
   .sky-status { min-height: 1.6em; }
-  .sky-fullscreen { position: absolute; top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); z-index: 10000; min-height: 44px; padding: 8px 16px; border: 1px solid rgba(255,255,255,.3); border-radius: 980px; background: rgba(26,27,29,.95); color: var(--text); cursor: pointer; font-size: .85rem; box-shadow: 0 2px 14px rgba(0,0,0,.4); }
+  .sky-fullscreen { position: absolute; top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); z-index: 3; min-height: 44px; padding: 8px 16px; border: 1px solid rgba(255,255,255,.3); border-radius: 980px; background: rgba(26,27,29,.95); color: var(--text); cursor: pointer; font-size: .85rem; box-shadow: 0 2px 14px rgba(0,0,0,.4); }
   .sky-fullscreen:hover { background: #35383c; }
   .sky-frame:fullscreen, .sky-frame:-webkit-full-screen { width: 100%; height: 100%; border: 0; border-radius: 0; }
   .sky-frame:fullscreen #sky-map, .sky-frame:-webkit-full-screen #sky-map { width: 100%; height: 100%; min-height: 0; }
@@ -459,6 +459,9 @@
   .site-nav a::after { content: ""; position: absolute; left: 15%; right: 15%; bottom: -7px; height: 1px; background: var(--text-2); opacity: 0; transform: scaleX(.65); transition: opacity 300ms var(--ease), transform 300ms var(--ease); }
   .site-nav a[aria-current="page"]::after { opacity: .7; transform: scaleX(1); }
 
+
+  html.locked .sky-fullscreen { visibility: hidden; }
+  .sky-arrival { position: absolute; left: 50%; top: 50%; width: 24px; height: 24px; margin: -12px; border: 1px solid var(--accent); border-radius: 50%; pointer-events: none; z-index: 2; }
 </style>
 </head>
 
@@ -1115,6 +1118,36 @@
   };
   var skyMap = null, skyLoading = false, skyLines = null, skyCatalog = null, skySelected = 0, skyLibraryPromise = null;
   function skyTarget(im) { return SKY_TARGETS[im.src.split('?')[0].split('/').pop()] || null; }
+  var skyJourneyFrame=0,skyArrivalAnimation=null;
+  function cancelSkyJourney(){
+    cancelAnimationFrame(skyJourneyFrame);skyJourneyFrame=0;
+    if(skyArrivalAnimation){skyArrivalAnimation.cancel();skyArrivalAnimation=null;}
+    $$('.sky-arrival').forEach(function(el){el.remove();});
+  }
+  function glowSkyTarget(i){
+    if(reduce())return;
+    var pin=$('[data-sky-photo="'+i+'"] circle');
+    if(pin){skyArrivalAnimation=pin.animate([{opacity:.6,filter:'drop-shadow(0 0 0px #63b5ab)'},{opacity:1,filter:'drop-shadow(0 0 5px #63b5ab)'},{opacity:1,filter:'drop-shadow(0 0 0px #63b5ab)'}],{duration:750,easing:'ease-out'});}
+    else {
+      var ring=document.createElement('span');ring.className='sky-arrival';ring.setAttribute('aria-hidden','true');$('#sky-map').appendChild(ring);
+      skyArrivalAnimation=ring.animate([{opacity:0,transform:'scale(.7)'},{opacity:.65,offset:.25},{opacity:0,transform:'scale(2)'}],{duration:750,easing:'ease-out'});
+      skyArrivalAnimation.onfinish=function(){ring.remove();};
+    }
+  }
+  function travelSky(target,i){
+    cancelSkyJourney();
+    if(reduce()){skyMap.setFoV(target.fov);skyMap.gotoRaDec(target.ra,target.dec);return;}
+    if(skyMap.travelTo){skyMap.travelTo(target,function(){glowSkyTarget(i);});return;}
+    var start=skyMap.getRaDec(),fov=skyMap.getFov()[0],delta=((target.ra-start[0]+540)%360)-180,t0=null;
+    function frame(now){
+      if(t0===null)t0=now;
+      var p=Math.min(1,(now-t0)/950),e=p*p*p*(p*(p*6-15)+10);
+      skyMap.setFoV(Math.exp(Math.log(fov)+(Math.log(target.fov)-Math.log(fov))*e));
+      skyMap.gotoRaDec((start[0]+delta*e+360)%360,start[1]+(target.dec-start[1])*e);
+      if(p<1)skyJourneyFrame=requestAnimationFrame(frame);else{skyJourneyFrame=0;glowSkyTarget(i);}
+    }
+    skyJourneyFrame=requestAnimationFrame(frame);
+  }
   function selectSkyPhoto(i, move) {
     skySelected = i;
     var im = IMAGES[i], target = skyTarget(im);
@@ -1122,7 +1155,8 @@
     $('#sky-preview').innerHTML = '<img src="' + esc(im.src) + '" alt="' + esc(im.alt) + '"><div><h2>' + esc(im.title) + '</h2><p class="desig">' + esc(im.designation) + '</p><p class="sky-note">' +
       (target ? esc(target.region) + (target.approximate ? ' · Approximate region marker' : ' · Target location') : 'A lunar composite. The Moon moves across the sky, so this photograph has no fixed map marker.') +
       '</p><button class="btn" type="button" data-open="' + i + '">View photograph</button></div>';
-    if (move && skyMap && target) { skyMap.setFoV(target.fov); skyMap.gotoRaDec(target.ra,target.dec); }
+    if (move && skyMap && target) travelSky(target,i);
+    else { cancelSkyJourney(); if(skyMap && target)glowSkyTarget(i); }
   }
   $('#sky-targets').innerHTML = IMAGES.map(function(im,i){ return '<button type="button" data-sky-index="'+i+'" aria-pressed="false">'+esc(im.title)+'</button>'; }).join('');
   $('#sky-targets').addEventListener('click',function(e){var b=e.target.closest('[data-sky-index]');if(b)selectSkyPhoto(+b.dataset.skyIndex,true);});
@@ -1161,6 +1195,7 @@
     return Math.max(1,Math.hypot(touches[1].clientX-touches[0].clientX,touches[1].clientY-touches[0].clientY));
   }
   var skyTouchRoot=$('#sky-map');
+  ['pointerdown','wheel','touchstart'].forEach(function(type){skyTouchRoot.addEventListener(type,cancelSkyJourney,{capture:true,passive:true});});
   skyTouchRoot.addEventListener('touchstart',function(e){
     if(!skyMap)return;
     if(e.touches.length>=2){
@@ -1220,6 +1255,18 @@
       }
       skyMap={
         starMode:true,
+        travelTo:function(target,done){
+          var initial={x:box.x,y:box.y,w:box.w,h:box.h},p=xy(target.ra,target.dec),w=1000*clamp(target.fov,5,360)/360,h=w*.6;
+          var tx=clamp(p[0]-w/2,0,1000-w),ty=clamp(p[1]-h/2,0,600-h),t0=null;
+          function frame(now){
+            if(t0===null)t0=now;
+            var t=Math.min(1,(now-t0)/950),e=t*t*t*(t*(t*6-15)+10);
+            box.x=initial.x+(tx-initial.x)*e;box.y=initial.y+(ty-initial.y)*e;
+            box.w=initial.w+(w-initial.w)*e;box.h=initial.h+(h-initial.h)*e;draw();
+            if(t<1)skyJourneyFrame=requestAnimationFrame(frame);else{skyJourneyFrame=0;done();}
+          }
+          skyJourneyFrame=requestAnimationFrame(frame);
+        },
         gotoRaDec:function(ra,dec){var p=xy(ra,dec);box.x=p[0]-box.w/2;box.y=p[1]-box.h/2;draw();},
         setFoV:function(fov){var cx=box.x+box.w/2,cy=box.y+box.h/2;box.w=1000*clamp(fov,5,360)/360;box.h=box.w*0.6;box.x=cx-box.w/2;box.y=cy-box.h/2;draw();},
         getFov:function(){return [box.w/1000*360,box.h/600*180];},
@@ -1292,9 +1339,9 @@
       skyMap=null;skyLibraryPromise=null;initStarMap();
     });
   }
-  $('#sky-reset').addEventListener('click',function(){if(skyMap){skyMap.gotoRaDec(0,25);skyMap.setFoV(skyMap.starMode?360:300);}});
-  $('#sky-closer').addEventListener('click',function(){if(skyMap)skyMap.setFoV(Math.max(0.1,skyMap.getFov()[0]/1.7));});
-  $('#sky-farther').addEventListener('click',function(){if(skyMap)skyMap.setFoV(Math.min(skyMap.starMode?360:300,skyMap.getFov()[0]*1.7));});
+  $('#sky-reset').addEventListener('click',function(){cancelSkyJourney();if(skyMap){skyMap.gotoRaDec(0,25);skyMap.setFoV(skyMap.starMode?360:300);}});
+  $('#sky-closer').addEventListener('click',function(){cancelSkyJourney();if(skyMap)skyMap.setFoV(Math.max(0.1,skyMap.getFov()[0]/1.7));});
+  $('#sky-farther').addEventListener('click',function(){cancelSkyJourney();if(skyMap)skyMap.setFoV(Math.min(skyMap.starMode?360:300,skyMap.getFov()[0]*1.7));});
   $('#sky-grid').addEventListener('change',function(){if(skyMap)skyMap.setCooGrid(skyMap.starMode?this.checked:{enabled:this.checked});});
   $('#sky-lines').addEventListener('change',function(){if(skyLines){if(this.checked)skyLines.show();else skyLines.hide();}});
 
@@ -1404,6 +1451,7 @@
   function afterShow() { refreshHeader(); positionThumb(); updateRail(); kick(); if(currentRoute === "explore") initSkyMap(); }
   function toTop() { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); }
   function go(name) {
+    if(name!=='explore')cancelSkyJourney();
     if (name === currentRoute) return;
     var prev = currentRoute && views[currentRoute], next = views[name], token = ++switchToken;
     currentRoute = name; updateNav(name);
@@ -1537,6 +1585,7 @@
   function histogramNumber(n) {
     return n >= 1000000 ? (n / 1000000).toFixed(1) + 'M' : n >= 1000 ? (n / 1000).toFixed(1) + 'k' : String(Math.round(n));
   }
+  var histogramFrame=0,histogramVisual=null;
   function drawHistogram() {
     if (!histogramData) return;
     var log = $('#hist-log').checked, keys = ['r', 'g', 'b'], colors = ['#ff818a', '#81d69b', '#81b8ff'];
@@ -1553,17 +1602,33 @@
     ticks.forEach(function (n) {
       out += '<line x1="66" x2="620" y1="' + y(n) + '" y2="' + y(n) + '" stroke="#35383c"/><text x="58" y="' + (y(n) + 4) + '" fill="#9a9da3" text-anchor="end" font-size="11">' + histogramNumber(n) + '</text>';
     });
-    histogramData.counts.forEach(function (bins, channel) {
-      if (!enabled[channel]) return;
-      var points = bins.map(function (n, i) { return (left + width * i / 255).toFixed(2) + ',' + y(n).toFixed(2); });
-      out += '<path d="M' + left + ',' + (top + height) + ' L' + points.join(' L') + ' L620,210 Z" fill="' + colors[channel] + '" fill-opacity="0.08"/>';
-      out += '<polyline points="' + points.join(' ') + '" fill="none" stroke="' + colors[channel] + '" stroke-width="1.6" stroke-linejoin="round"/>';
+    var targetHeights=histogramData.counts.map(function(bins){return bins.map(function(n){return scaled(n)/scaled(max);});});
+    var targetAlpha=enabled.map(function(on){return on?1:0;});
+    var initial=!histogramVisual;
+    var from=histogramVisual||{heights:targetHeights.map(function(b){return b.map(function(){return 0;});}),alpha:[0,0,0]};
+    cancelAnimationFrame(histogramFrame);
+    colors.forEach(function(color,channel){
+      out+='<g data-hist-curve="'+channel+'"><path fill="'+color+'" fill-opacity=".08"/><polyline fill="none" stroke="'+color+'" stroke-width="1.6" stroke-linejoin="round"/></g>';
     });
     [0,64,128,192,255].forEach(function (n) {
       out += '<text x="' + (left + width * n / 255) + '" y="230" text-anchor="middle" fill="#9a9da3" font-size="11">' + n + '</text>';
     });
     out += '<text x="343" y="252" text-anchor="middle" fill="#c6c3bc" font-size="12">Brightness (dark → bright)</text>';
     histPlot.innerHTML = out;
+    var groups=$('[data-hist-curve]',histPlot),t0=null,duration=initial?420:220;
+    function renderHistogram(now){
+      if(t0===null)t0=now;
+      var p=reduce()?1:Math.min(1,(now-t0)/duration),e=1-Math.pow(1-p,3);
+      histogramVisual={heights:targetHeights.map(function(b,c){return b.map(function(n,j){return from.heights[c][j]+(n-from.heights[c][j])*e;});}),alpha:targetAlpha.map(function(a,c){return from.alpha[c]+(a-from.alpha[c])*e;})};
+      groups.forEach(function(group,c){
+        var points=histogramVisual.heights[c].map(function(n,j){return (left+width*j/255).toFixed(2)+','+(top+height*(1-n)).toFixed(2);});
+        group.setAttribute('opacity',histogramVisual.alpha[c].toFixed(3));
+        $('path',group).setAttribute('d','M66,210 L'+points.join(' L')+' L620,210 Z');
+        $('polyline',group).setAttribute('points',points.join(' '));
+      });
+      if(p<1)histogramFrame=requestAnimationFrame(renderHistogram);else histogramFrame=0;
+    }
+    renderHistogram(performance.now());
     var names = ['Red', 'Green', 'Blue'].filter(function (name, i) { return enabled[i]; });
     $('#hist-svg-title').textContent = 'Brightness histogram — ' + histogramData.title;
     $('#hist-svg-desc').textContent = (names.length ? names.join(', ') + ' pixel counts by brightness from 0 to 255.' : 'All color channels are hidden.') + (log ? ' The vertical axis uses a logarithmic scale.' : ' The vertical axis uses a linear scale.');
@@ -1599,6 +1664,7 @@
 
   function loadHistogram(img, im) {
     var token = ++histogramToken;
+    cancelAnimationFrame(histogramFrame);histogramFrame=0;histogramVisual=null;
     histogramData = null; histPlot.innerHTML = '';
     histStatus.textContent = 'Reading image pixels…';
     $('#hist-svg-desc').textContent = 'Loading the histogram for ' + im.title + '.';
@@ -1677,6 +1743,7 @@
 
   function openViewer(i, originMedia, opener) {
     if (vs.open) return;
+    cancelSkyJourney();
     vs.open = true; vs.index = i; vs.opener = opener;
     fillViewer(i);
     viewer.classList.add('pre'); viewer.hidden = false; vScroll.scrollTop = 0;
@@ -1698,6 +1765,7 @@
     if (!vs.open || vs.closing) return;
     vs.closing = true;
     histogramToken++;
+    cancelAnimationFrame(histogramFrame);histogramFrame=0;
     resetPhotoZoom();
     var origin = findOrigin(vs.index);
     viewer.classList.add('leaving');
