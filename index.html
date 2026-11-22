@@ -392,6 +392,37 @@
     .viewer-info { grid-column: 1; grid-row: 4; align-self: start; margin-top: 32px; }
   }
 
+
+  .light-explorer { margin-top: clamp(64px,9vw,120px); padding-top: clamp(40px,6vw,64px); border-top: 1px solid var(--line); }
+  .light-explorer > p { color: var(--text-2); max-width: 52em; margin-top: 16px; }
+  .spectrum-panel { margin-top: 28px; border: 1px solid var(--line); border-radius: 24px; padding: clamp(18px,3vw,32px); background: var(--surface); min-width: 0; }
+  .spectrum-panel h3 { font-size: 1rem; font-weight: 500; }
+  .spectrum-scroll { overflow-x: auto; margin-top: 12px; }
+  .spectrum-overview { display: block; min-width: 680px; width: 100%; height: auto; }
+  .spectrum-bands, .spectral-lines { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .spectrum-bands button, .spectral-lines button { font-size: 0.82rem; padding: 8px 13px; border: 1px solid var(--line); border-radius: 980px; background: transparent; cursor: pointer; }
+  .spectrum-bands button[aria-pressed="true"], .spectral-lines button[aria-pressed="true"] { color: var(--bg); background: var(--text); border-color: var(--text); }
+  .spectrum-explanation { color: var(--text-2); margin-top: 14px; font-size: 0.9rem; min-height: 3.2em; }
+  .light-grid { display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 24px; margin-top: 24px; align-items: start; }
+  .light-workbench { min-width: 0; padding: clamp(18px,3vw,28px); border-radius: 24px; border: 1px solid var(--line); }
+  .light-workbench label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 8px; }
+  .light-workbench select { width: 100%; background: var(--surface); color: var(--text); font: inherit; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+  .visible-reference { display: block; width: 100%; height: auto; margin-top: 24px; }
+  .light-slider-row { display: flex; align-items: center; gap: 16px; margin-top: 10px; }
+  .light-slider-row input { flex: 1; min-width: 0; accent-color: var(--accent); }
+  .light-reading { font-size: 1.05rem; font-weight: 500; min-width: 88px; text-align: right; }
+  .light-swatch { width: 26px; height: 26px; border-radius: 50%; flex: 0 0 auto; border: 1px solid rgba(255,255,255,0.2); }
+  .light-photo { border-radius: 24px; border: 1px solid var(--line); padding: 20px; background: var(--surface); min-width:0; }
+  .light-photo img { display: block; width: 100%; height: 240px; object-fit: contain; border-radius: 14px; }
+  .light-photo h3 { font-family: var(--serif); font-weight: 400; font-size: 1.65rem; margin-top: 16px; }
+  .light-photo p { color: var(--muted); font-size: 0.85rem; margin-top: 8px; }
+  .light-photo .btn { margin-top: 16px; font-size: 0.85rem; }
+  .light-caption { margin-top: 16px; font-size: 0.8rem; color: var(--muted); }
+  .line-explanation { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line); }
+  .line-explanation h4 { font-size: 0.95rem; font-weight: 500; margin: 0 0 8px; }
+  .line-explanation p { font-size: 0.88rem; color: var(--text-2); }
+  @media (max-width:900px) { .light-grid { grid-template-columns: minmax(0,1fr); } .light-photo img { height:220px; } }
+
 </style>
 </head>
 
@@ -492,6 +523,33 @@
         </div>
         <aside class="sky-preview" id="sky-preview" aria-label="Selected photograph"></aside>
       </div>
+
+      <section class="light-explorer" aria-labelledby="light-heading">
+        <h2 id="light-heading">The light behind the colors.</h2>
+        <p>Visible light is a tiny part of a much bigger spectrum. Explore its colors, find hydrogen-alpha, and discover why different subjects in my photographs glow or reflect light.</p>
+        <div class="spectrum-panel">
+          <h3>From gamma rays to radio waves</h3>
+          <div class="spectrum-scroll"><svg class="spectrum-overview" id="spectrum-overview" viewBox="0 0 1000 160" role="img" aria-label="Electromagnetic spectrum on a logarithmic wavelength axis, with visible light highlighted"></svg></div>
+          <div class="spectrum-bands" id="spectrum-bands" role="group" aria-label="Explore regions of the electromagnetic spectrum"></div>
+          <p class="spectrum-explanation" id="spectrum-explanation" aria-live="polite"></p>
+          <p class="light-caption">Logarithmic overview: equal steps represent factors of ten. Band boundaries are approximate; the spectrum continues beyond both ends. Microwaves are part of the wider radio spectrum.</p>
+        </div>
+        <div class="light-grid">
+          <div class="light-workbench">
+            <h3 style="font-size:1rem;font-weight:500;margin-bottom:18px">A closer look at visible light</h3>
+            <label for="light-photo-select">Choose one of my photographs</label>
+            <select id="light-photo-select"></select>
+            <svg class="visible-reference" id="visible-reference" viewBox="0 0 700 180" role="img" aria-label="Visible wavelengths from 380 to 750 nanometers with reference emission lines"></svg>
+            <label for="light-wavelength">Explore a wavelength</label>
+            <div class="light-slider-row"><span class="light-swatch" id="light-swatch" aria-hidden="true"></span><input id="light-wavelength" type="range" min="380" max="750" step="0.1" value="656.3"><output for="light-wavelength" class="light-reading" id="light-reading">656.3 nm</output></div>
+            <div class="spectral-lines" id="spectral-lines" role="group" aria-label="Reference emission lines"></div>
+            <div class="line-explanation" id="line-explanation" aria-live="polite"></div>
+            <p class="light-caption">The shaded range or marker connects the selected subject to a light-producing process. It is illustrative, not a measured spectrum or a wavelength filter applied to the photograph. Screen colors are approximate.</p>
+          </div>
+          <aside class="light-photo" id="light-photo" aria-label="Photograph and its light"></aside>
+        </div>
+        <p class="light-caption">References: <a href="https://science.nasa.gov/ems/01_intro/" target="_blank" rel="noopener">NASA: the electromagnetic spectrum</a> · <a href="https://www.sdss4.org/dr12/spectro/spectro_basics/" target="_blank" rel="noopener">SDSS: spectral-line wavelengths</a> · <a href="https://science.nasa.gov/image-article/apod-1999-march-01-reflection-nebula-ngc-1435/" target="_blank" rel="noopener">NASA: Pleiades reflection nebulosity</a>. Visible range shown here is approximately 380–750 nm; human sensitivity varies.</p>
+      </section>
     </div>
   </section>
 
@@ -1138,6 +1196,101 @@
   $('#sky-farther').addEventListener('click',function(){if(skyMap)skyMap.setFoV(Math.min(skyMap.starMode?360:300,skyMap.getFov()[0]*1.7));});
   $('#sky-grid').addEventListener('change',function(){if(skyMap)skyMap.setCooGrid(skyMap.starMode?this.checked:{enabled:this.checked});});
   $('#sky-lines').addEventListener('change',function(){if(skyLines){if(this.checked)skyLines.show();else skyLines.hide();}});
+
+
+  /* Wavelength references: approximate air wavelengths in nm, not measured photo spectra. */
+  var LIGHT_LINES = [
+    {id:'ha',name:'Hydrogen-alpha',label:'Hα',nm:656.3,color:'#ff515c',body:'Hydrogen-alpha is red light emitted by hydrogen at about 656.3 nm. It contributes to the red glow of many emission nebulae, including the Rosette and North America regions.'},
+    {id:'oiii',name:'Oxygen III',label:'O III',nm:500.7,color:'#32dfb1',body:'Doubly ionized oxygen emits a strong blue-green line near 500.7 nm, with another at 495.9 nm. O III is a common narrowband reference; selecting it does not establish how much is present in this photograph.'},
+    {id:'hb',name:'Hydrogen-beta',label:'Hβ',nm:486.1,color:'#44cdff',body:'Hydrogen-beta is a blue-green hydrogen emission line near 486.1 nm. Together with other lines, it helps give glowing gas its color.'},
+    {id:'sii',name:'Sulfur II',label:'S II',nm:672.4,values:[671.6,673.1],color:'#fa4747',body:'Singly ionized sulfur has a pair of deep-red lines near 671.6 and 673.1 nm. The slider sits between them. Narrowband images sometimes assign this light a different display color; both lines physically lie in the red.'}
+  ];
+  var LIGHT_BANDS = [
+    {name:'Gamma rays',lo:0.001,hi:0.01,color:'#65549a',body:'The shortest wavelengths in this overview carry the most energy. Gamma-ray astronomy studies extreme events; these photographs do not record gamma rays.'},
+    {name:'X-rays',lo:0.01,hi:10,color:'#7561a7',body:'X-rays reveal very hot gas and energetic objects. These are outside the visible light recorded in this portfolio.'},
+    {name:'Ultraviolet',lo:10,hi:380,color:'#755ec5',body:'Ultraviolet lies beyond violet. Hot stars can emit ultraviolet light that energizes nearby gas, which can then glow at visible wavelengths.'},
+    {name:'Visible',lo:380,hi:750,color:'#63b5ab',body:'All the photographs here are visible-light images. A nebula, galaxy, or star cluster usually produces or reflects many wavelengths, rather than occupying a single point on this spectrum.'},
+    {name:'Infrared',lo:750,hi:1000000,color:'#a75f56',body:'Infrared lies beyond red. It helps astronomers study cool material and look through some dust clouds. The photographs here are not infrared measurements.'},
+    {name:'Microwaves',lo:1000000,hi:1000000000,color:'#917453',body:'Microwaves are long-wavelength light, within the broader radio spectrum. They can reveal cold material and the early universe, beyond what these cameras record.'},
+    {name:'Radio',lo:1000000000,hi:1000000000000,color:'#657e8c',body:'Radio astronomy explores much longer wavelengths with different detectors. The optical targets shown here can also be studied at other wavelengths, but these images record visible light.'}
+  ];
+  var lightPhotoIndex=0,lightReference='ha';
+  var lightSelect=$('#light-photo-select'),lightSlider=$('#light-wavelength');
+  function lightProfile(im) {
+    var src=im.src.split('?')[0];
+    if(/rosette|north-america/.test(src))return {kind:'emission',line:'ha',title:'Glowing hydrogen',text:'The red and pink nebulosity is associated with hydrogen emission, including Hα at 656.3 nm. The photograph also contains broad starlight; it is not a single-wavelength image.'};
+    if(/image-04/.test(src))return {kind:'emission',line:'ha',title:'Light from glowing gas and stars',text:'Orion combines emission from gas with starlight and dust. Hα is one useful reference in its red glow, alongside other emission lines and broad-spectrum light.'};
+    if(/pleiades/.test(src))return {kind:'blue',title:'Starlight scattered by dust',text:'The blue haze around the Pleiades is reflected starlight. Dust scatters shorter visible wavelengths more efficiently. The highlighted blue range is illustrative: this is broadband reflection, not one blue emission line.'};
+    if(/moon/.test(src))return {kind:'broad',title:'Reflected sunlight',text:'The lunar surface reflects a broad range of sunlight. This composite also includes light from background stars. The Moon does not belong to a single visible wavelength.'};
+    if(/milky-way/.test(src))return {kind:'broad',title:'A mixture of many stars',text:'The Milky Way combines broad-spectrum starlight with dust and glowing gas. Its colors span the visible band; this landscape is not confined to one emission line.'};
+    return {kind:'broad',title:'A galaxy of many colors',text:'A galaxy combines light from many stars, along with gas and dust. Its appearance spans the visible spectrum. The highlighted range does not represent a measured intensity distribution.'};
+  }
+  function visibleColor(n) {
+    var r=0,g=0,b=0;
+    if(n<440){r=(440-n)/60;b=1;}else if(n<490){g=(n-440)/50;b=1;}
+    else if(n<510){g=1;b=(510-n)/20;}else if(n<580){r=(n-510)/70;g=1;}
+    else if(n<645){r=1;g=(645-n)/65;}else r=1;
+    return 'rgb('+[r,g,b].map(function(c){return Math.round(255*Math.pow(clamp(c,0,1),0.8));}).join(',')+')';
+  }
+  function drawFullSpectrum(active) {
+    var pos=function(n){return 35+(Math.log10(n)+3)/15*930;};
+    var out='<defs><linearGradient id="full-visible"><stop stop-color="#7b38ff"/><stop offset=".25" stop-color="#167aff"/><stop offset=".5" stop-color="#34dd61"/><stop offset=".75" stop-color="#ffba36"/><stop offset="1" stop-color="#e93d40"/></linearGradient></defs>';
+    LIGHT_BANDS.forEach(function(b,i){
+      var x=pos(b.lo),w=pos(b.hi)-x;
+      out+='<rect x="'+x+'" y="50" width="'+w+'" height="34" fill="'+(i===3?'url(#full-visible)':b.color)+'" opacity="'+(i===active?1:0.45)+'"/>';
+      if(i!==3)out+='<text x="'+(x+w/2)+'" y="42" text-anchor="middle" fill="#c6c3bc" font-size="12">'+b.name+'</text>';
+    });
+    var vx=pos(550);
+    out+='<line x1="'+vx+'" x2="'+vx+'" y1="18" y2="48" stroke="#e9e6df"/><text x="'+vx+'" y="12" text-anchor="middle" fill="#e9e6df" font-size="12">Visible: my photographs</text>';
+    [[0.001,'1 pm'],[1,'1 nm'],[1000,'1 μm'],[1000000,'1 mm'],[1000000000,'1 m'],[1000000000000,'1 km']].forEach(function(t){
+      var x=pos(t[0]);out+='<line x1="'+x+'" x2="'+x+'" y1="88" y2="94" stroke="#9a9da3"/><text x="'+x+'" y="111" text-anchor="middle" fill="#9a9da3" font-size="11">'+t[1]+'</text>';
+    });
+    out+='<text x="35" y="144" fill="#9a9da3" font-size="11">Shorter wavelengths · higher energy</text><text x="965" y="144" text-anchor="end" fill="#9a9da3" font-size="11">Longer wavelengths · lower energy →</text>';
+    $('#spectrum-overview').innerHTML=out;
+    $('#spectrum-explanation').textContent=LIGHT_BANDS[active].body;
+    $$('#spectrum-bands button').forEach(function(b){b.setAttribute('aria-pressed',+b.dataset.band===active?'true':'false');});
+  }
+  function drawVisibleSpectrum() {
+    var profile=lightProfile(IMAGES[lightPhotoIndex]),nm=+lightSlider.value,x=function(n){return 25+(n-380)/370*650;};
+    var stops='';for(var n=380;n<=750;n+=10)stops+='<stop offset="'+((n-380)/370*100)+'%" stop-color="'+visibleColor(n)+'"/>';
+    var out='<defs><linearGradient id="visible-rainbow">'+stops+'</linearGradient></defs><rect x="25" y="56" width="650" height="38" rx="8" fill="url(#visible-rainbow)"/>';
+    var lo=profile.kind==='blue'?430:380,hi=profile.kind==='blue'?500:750;
+    if(profile.kind!=='emission')out+='<rect x="'+x(lo)+'" y="104" width="'+(x(hi)-x(lo))+'" height="8" rx="4" fill="'+(profile.kind==='blue'?'#81b8ff':'#c6c3bc')+'"/>';
+    else out+='<line x1="'+x(656.3)+'" x2="'+x(656.3)+'" y1="101" y2="115" stroke="#ff818a" stroke-width="4"/>';
+    LIGHT_LINES.forEach(function(l){
+      var values=l.values||[l.nm],top=(l.id==='oiii'||l.id==='sii')?34:12;
+      values.forEach(function(v){out+='<line x1="'+x(v)+'" x2="'+x(v)+'" y1="48" y2="98" stroke="#fff" stroke-opacity=".85" stroke-width="1.4"/>';});
+      out+='<text x="'+x(l.nm)+'" y="'+top+'" text-anchor="middle" fill="#e9e6df" font-size="12">'+l.label+'</text><line x1="'+x(l.nm)+'" x2="'+x(l.nm)+'" y1="'+(top+4)+'" y2="48" stroke="#9a9da3" stroke-width=".8"/>';
+    });
+    out+='<path d="M'+x(nm)+',47 l-5,-7 h10 Z" fill="#fff"/>';
+    [380,450,500,550,600,650,750].forEach(function(n){out+='<text x="'+x(n)+'" y="137" text-anchor="middle" fill="#9a9da3" font-size="11">'+n+'</text>';});
+    out+='<text x="350" y="166" text-anchor="middle" fill="#c6c3bc" font-size="12">Wavelength in nanometers (nm)</text>';
+    $('#visible-reference').innerHTML=out;
+    $('#light-reading').textContent=nm.toFixed(1)+' nm';$('#light-swatch').style.background=visibleColor(nm);
+    lightSlider.setAttribute('aria-valuetext',nm.toFixed(1)+' nanometers');
+  }
+  function selectLightReference(id) {
+    lightReference=id;
+    var line=LIGHT_LINES.find(function(l){return l.id===id;});
+    if(line)lightSlider.value=line.nm;
+    $$('#spectral-lines button').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.line===id?'true':'false');});
+    $('#line-explanation').innerHTML=line?'<h4>'+esc(line.name)+' · '+(line.values?'671.6 &amp; 673.1':line.nm.toFixed(1))+' nm</h4><p>'+esc(line.body)+'</p>':'<h4>A point in visible light</h4><p>Move across the rainbow to compare wavelengths. A color on this bar is a reference, not a measurement from the photograph.</p>';
+    drawVisibleSpectrum();
+  }
+  function selectLightPhoto(i) {
+    lightPhotoIndex=i;var im=IMAGES[i],profile=lightProfile(im);
+    $('#light-photo').innerHTML='<img src="'+esc(im.src)+'" alt="'+esc(im.alt)+'" loading="lazy"><h3>'+esc(im.title)+'</h3><p>'+esc(profile.title)+'</p><p>'+esc(profile.text)+'</p><button class="btn" type="button" data-open="'+i+'">View photograph</button>';
+    if(profile.line)selectLightReference(profile.line);else{lightSlider.value=profile.kind==='blue'?460:550;selectLightReference(null);}
+  }
+  lightSelect.innerHTML=IMAGES.map(function(im,i){return '<option value="'+i+'">'+esc(im.title)+'</option>';}).join('');
+  $('#spectrum-bands').innerHTML=LIGHT_BANDS.map(function(b,i){return '<button type="button" data-band="'+i+'" aria-pressed="false">'+esc(b.name)+'</button>';}).join('');
+  $('#spectrum-bands').addEventListener('click',function(e){var b=e.target.closest('[data-band]');if(b)drawFullSpectrum(+b.dataset.band);});
+  $('#spectral-lines').innerHTML=LIGHT_LINES.map(function(l){return '<button type="button" data-line="'+l.id+'" aria-pressed="false">'+l.label+' · '+(l.values?'671.6 / 673.1':l.nm)+' nm</button>';}).join('');
+  $('#spectral-lines').addEventListener('click',function(e){var b=e.target.closest('[data-line]');if(b)selectLightReference(b.dataset.line);});
+  lightSelect.addEventListener('change',function(){selectLightPhoto(+this.value);});
+  lightSlider.addEventListener('input',function(){lightReference=null;$$('#spectral-lines button').forEach(function(b){b.setAttribute('aria-pressed','false');});drawVisibleSpectrum();});
+  var firstEmission=IMAGES.findIndex(function(im){return im.src.indexOf('rosette')>=0;});
+  lightSelect.value=firstEmission>=0?firstEmission:0;drawFullSpectrum(3);selectLightPhoto(+lightSelect.value);
 
   /* ---------- Tabs (hash routing with a soft cross-fade) ---------- */
   var views = {}; $$('.view').forEach(function (v) { views[v.dataset.view] = v; });
