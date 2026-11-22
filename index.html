@@ -304,6 +304,23 @@
   .software-group a small { display: block; color: var(--muted); font-size: 0.82rem; }
   .software-group a > span:last-child { color: var(--muted); }
 
+
+  /* RGB histogram for the displayed photograph */
+  .viewer-visual { min-width: 0; }
+  .histogram { margin-top: 24px; padding: 20px; border: 1px solid var(--line); border-radius: 18px; background: rgba(26,27,29,0.7); }
+  .histogram h3 { font-size: 1rem; font-weight: 500; }
+  .histogram p { color: var(--muted); font-size: 0.82rem; margin-top: 6px; }
+  .hist-controls { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 20px; margin-top: 16px; font-size: 0.85rem; }
+  .hist-channels { display: flex; flex-wrap: wrap; gap: 16px; padding: 0; border: 0; margin: 0; }
+  .hist-channels legend { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .hist-controls label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+  .hist-controls input { width: 16px; height: 16px; margin: 0; accent-color: var(--accent); }
+  .hist-controls [data-channel="r"] { accent-color: #ff818a; }
+  .hist-controls [data-channel="g"] { accent-color: #81d69b; }
+  .hist-controls [data-channel="b"] { accent-color: #81b8ff; }
+  .hist-chart { display: block; width: 100%; height: auto; margin-top: 12px; overflow: visible; }
+  .hist-status { min-height: 1.4em; }
+
 </style>
 </head>
 
@@ -451,7 +468,28 @@
         </div>
       </div>
       <div class="viewer-body">
-        <div class="viewer-slot" id="v-slot"><div class="viewer-media" id="v-media"></div></div>
+        <div class="viewer-visual">
+          <div class="viewer-slot" id="v-slot"><div class="viewer-media" id="v-media"></div></div>
+          <section class="histogram" aria-labelledby="hist-title">
+            <h3 id="hist-title">Colors &amp; brightness</h3>
+            <p>Each curve counts pixels from dark to bright in the finished photograph. This is a brightness histogram, not a wavelength spectrum.</p>
+            <div class="hist-controls">
+              <fieldset class="hist-channels"><legend>Color channels</legend>
+                <label><input type="checkbox" data-channel="r" checked>Red</label>
+                <label><input type="checkbox" data-channel="g" checked>Green</label>
+                <label><input type="checkbox" data-channel="b" checked>Blue</label>
+              </fieldset>
+              <label><input type="checkbox" id="hist-log" checked>Log scale</label>
+            </div>
+            <svg class="hist-chart" id="hist-chart" viewBox="0 0 640 260" role="img" aria-labelledby="hist-svg-title hist-svg-desc">
+              <title id="hist-svg-title">RGB brightness histogram</title>
+              <desc id="hist-svg-desc">Loading the photograph.</desc>
+              <g id="hist-plot"></g>
+            </svg>
+            <p class="hist-status" id="hist-status" role="status"></p>
+            <p>Brightness: 0 = black, 255 = brightest. Log scale makes smaller peaks easier to see.</p>
+          </section>
+        </div>
         <div class="viewer-info" id="v-info">
           <h2 id="v-title"></h2>
           <p class="desig" id="v-desig"></p>
@@ -901,11 +939,95 @@
   var viewer = $('#viewer'), vSlot = $('#v-slot'), vMedia = $('#v-media'), vScroll = $('#viewer-scroll');
   var vs = { open: false, closing: false, index: 0, opener: null, hidden: [] };
 
+  var histogramCache = new Map(), histogramToken = 0, histogramData = null;
+  var histPlot = $('#hist-plot'), histStatus = $('#hist-status');
+  function histogramCounts(pixels, counts) {
+    for (var p = 0; p < pixels.length; p += 4) {
+      if (!pixels[p + 3]) continue;
+      counts[0][pixels[p]]++; counts[1][pixels[p + 1]]++; counts[2][pixels[p + 2]]++;
+    }
+  }
+  function histogramNumber(n) {
+    return n >= 1000000 ? (n / 1000000).toFixed(1) + 'M' : n >= 1000 ? (n / 1000).toFixed(1) + 'k' : String(Math.round(n));
+  }
+  function drawHistogram() {
+    if (!histogramData) return;
+    var log = $('#hist-log').checked, keys = ['r', 'g', 'b'], colors = ['#ff818a', '#81d69b', '#81b8ff'];
+    var enabled = keys.map(function (key) { return $('[data-channel="' + key + '"]').checked; });
+    var max = Math.max(1, histogramData.max), left = 66, top = 24, width = 554, height = 186;
+    var scaled = function (n) { return log ? Math.log10(n + 1) : n; };
+    var y = function (n) { return top + height * (1 - scaled(n) / scaled(max)); };
+    var ticks = [0];
+    if (log) { for (var n = 1; n < max; n *= 10) ticks.push(n); ticks.push(max); }
+    else { for (var j = 1; j <= 4; j++) ticks.push(max * j / 4); }
+    // Avoid crowded labels when the upper limit is close to a power of ten.
+    ticks = ticks.filter(function (n, i) { return i === ticks.length - 1 || i === 0 || Math.abs(y(n) - y(max)) > 15; });
+    var out = '<text x="66" y="13" fill="#9a9da3" font-size="11">Pixels' + (log ? ' (log scale)' : '') + '</text>';
+    ticks.forEach(function (n) {
+      out += '<line x1="66" x2="620" y1="' + y(n) + '" y2="' + y(n) + '" stroke="#35383c"/><text x="58" y="' + (y(n) + 4) + '" fill="#9a9da3" text-anchor="end" font-size="11">' + histogramNumber(n) + '</text>';
+    });
+    histogramData.counts.forEach(function (bins, channel) {
+      if (!enabled[channel]) return;
+      var points = bins.map(function (n, i) { return (left + width * i / 255).toFixed(2) + ',' + y(n).toFixed(2); });
+      out += '<path d="M' + left + ',' + (top + height) + ' L' + points.join(' L') + ' L620,210 Z" fill="' + colors[channel] + '" fill-opacity="0.08"/>';
+      out += '<polyline points="' + points.join(' ') + '" fill="none" stroke="' + colors[channel] + '" stroke-width="1.6" stroke-linejoin="round"/>';
+    });
+    [0,64,128,192,255].forEach(function (n) {
+      out += '<text x="' + (left + width * n / 255) + '" y="230" text-anchor="middle" fill="#9a9da3" font-size="11">' + n + '</text>';
+    });
+    out += '<text x="343" y="252" text-anchor="middle" fill="#c6c3bc" font-size="12">Brightness (dark → bright)</text>';
+    histPlot.innerHTML = out;
+    var names = ['Red', 'Green', 'Blue'].filter(function (name, i) { return enabled[i]; });
+    $('#hist-svg-title').textContent = 'Brightness histogram — ' + histogramData.title;
+    $('#hist-svg-desc').textContent = (names.length ? names.join(', ') + ' pixel counts by brightness from 0 to 255.' : 'All color channels are hidden.') + (log ? ' The vertical axis uses a logarithmic scale.' : ' The vertical axis uses a linear scale.');
+    histStatus.textContent = names.length ? histogramData.width.toLocaleString() + ' × ' + histogramData.height.toLocaleString() + ' pixels · Finished image' : 'Select a color channel to show its curve.';
+  }
+  function loadHistogram(img, im) {
+    var token = ++histogramToken;
+    histogramData = null; histPlot.innerHTML = '';
+    histStatus.textContent = 'Reading image pixels…';
+    $('#hist-svg-desc').textContent = 'Loading the histogram for ' + im.title + '.';
+    var fail = function () {
+      if (token !== histogramToken) return;
+      histogramData = null; histPlot.innerHTML = '';
+      histStatus.textContent = 'Histogram unavailable for this image.';
+      $('#hist-svg-desc').textContent = 'Image pixel data could not be read.';
+    };
+    var ready = function () {
+      if (token !== histogramToken) return;
+      if (histogramCache.has(im.src)) { histogramData = histogramCache.get(im.src); drawHistogram(); return; }
+      var canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth; canvas.height = Math.min(256, img.naturalHeight);
+      var ctx = canvas.getContext('2d', { willReadFrequently: true });
+      if (!ctx) { fail(); return; }
+      var counts = [Array(256).fill(0), Array(256).fill(0), Array(256).fill(0)], row = 0;
+      function strip() {
+        if (token !== histogramToken) return;
+        try {
+          var height = Math.min(256, img.naturalHeight - row);
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, row, img.naturalWidth, height, 0, 0, img.naturalWidth, height);
+          histogramCounts(ctx.getImageData(0, 0, img.naturalWidth, height).data, counts);
+          row += height;
+          if (row < img.naturalHeight) { requestAnimationFrame(strip); return; }
+          var max = 0; counts.forEach(function (bins) { bins.forEach(function (n) { max = Math.max(max, n); }); });
+          histogramData = { counts: counts, max: max, width: img.naturalWidth, height: img.naturalHeight, title: im.title };
+          histogramCache.set(im.src, histogramData); drawHistogram();
+        } catch (e) { fail(); }
+      }
+      requestAnimationFrame(strip);
+    };
+    if (img.complete) { if (img.naturalWidth) ready(); else fail(); }
+    else { img.addEventListener('load', ready, { once: true }); img.addEventListener('error', fail, { once: true }); }
+  }
+  $('.hist-controls input').forEach(function (input) { input.addEventListener('change', drawHistogram); });
+
   function fillViewer(i) {
     var im = IMAGES[i];
     vMedia.className = 'viewer-media'; vMedia.setAttribute('data-file', im.src);
     vMedia.innerHTML = '<img src="' + esc(im.src) + '" alt="' + esc(im.alt) + '" data-fallback>';
     watchImages(vMedia);
+    loadHistogram($('img', vMedia), im);
     $('#v-title').textContent = im.title;
     $('#v-desig').textContent = im.designation;
     $('#v-desc').textContent = im.description;
@@ -953,6 +1075,7 @@
   function closeViewer() {
     if (!vs.open || vs.closing) return;
     vs.closing = true;
+    histogramToken++;
     var origin = findOrigin(vs.index);
     viewer.classList.add('leaving');
     var finished = false;
@@ -992,7 +1115,7 @@
   $('#v-prev').addEventListener('click', function () { stepViewer(-1); });
   $('#v-next').addEventListener('click', function () { stepViewer(1); });
   viewer.addEventListener('click', function (e) {
-    if (e.target.closest('.viewer-info, .viewer-media, .viewer-controls')) return;
+    if (e.target.closest('.viewer-info, .viewer-visual, .viewer-media, .viewer-controls')) return;
     closeViewer();
   });
   document.addEventListener('keydown', function (e) {
