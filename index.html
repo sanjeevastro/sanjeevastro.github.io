@@ -963,7 +963,7 @@
   });
   // Mix portrait and landscape frames to keep the three gallery columns close in height.
   // Keep original image indices so viewer links and home-page features remain stable.
-  var galleryOrder = [0, 7, 9, 1, 3, 6, 8, 2, 4, 5];
+  var galleryOrder = [0, 7, 9, 1, 3, 6, 8, 2, 10, 5, 4];
   IMAGES.forEach(function (im, i) { if (galleryOrder.indexOf(i) < 0) galleryOrder.push(i); });
   $('#grid').innerHTML = galleryOrder.map(function (i) {
     var im = IMAGES[i]; if (!im) return '';
